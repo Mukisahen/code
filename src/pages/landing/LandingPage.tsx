@@ -70,8 +70,8 @@ export default function LandingPage() {
           <Logo size="sm" />
           <div className="flex items-center gap-2 sm:gap-3">
             <ThemeToggle />
-            <Link to={ROUTES.login}>
-              <Button variant="text" size="sm" className="hidden sm:inline-flex">
+            <Link to={ROUTES.login} className="hidden sm:block">
+              <Button variant="text" size="sm">
                 Log in
               </Button>
             </Link>

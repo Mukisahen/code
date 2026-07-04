@@ -56,6 +56,12 @@
   --shadow-1: 0 1px 2px 0 rgb(0 0 0 / 0.06), 0 1px 3px 1px rgb(0 0 0 / 0.08);
   --shadow-2: 0 1px 2px 0 rgb(0 0 0 / 0.08), 0 2px 6px 2px rgb(0 0 0 / 0.10);
   --shadow-3: 0 1px 3px 0 rgb(0 0 0 / 0.10), 0 4px 8px 3px rgb(0 0 0 / 0.12);
+
+  /* Categorical chart palette — validated for CVD safety, fixed hue order */
+  --chart-cat-1: #1E7A34;
+  --chart-cat-2: #A8790A;
+  --chart-cat-3: #B5541E;
+  --chart-cat-4: #2563AC;
 }
 
 .dark {
@@ -97,4 +103,9 @@
   --shadow-1: 0 1px 2px 0 rgb(0 0 0 / 0.30), 0 1px 3px 1px rgb(0 0 0 / 0.30);
   --shadow-2: 0 1px 2px 0 rgb(0 0 0 / 0.30), 0 2px 6px 2px rgb(0 0 0 / 0.30);
   --shadow-3: 0 1px 3px 0 rgb(0 0 0 / 0.35), 0 4px 8px 3px rgb(0 0 0 / 0.35);
+
+  --chart-cat-1: #2E9149;
+  --chart-cat-2: #B87A1E;
+  --chart-cat-3: #B85A28;
+  --chart-cat-4: #3D74C9;
 }

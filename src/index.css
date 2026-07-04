@@ -52,6 +52,11 @@
   --shadow-elevation-2: var(--shadow-2);
   --shadow-elevation-3: var(--shadow-3);
 
+  --color-chart-cat-1: var(--chart-cat-1);
+  --color-chart-cat-2: var(--chart-cat-2);
+  --color-chart-cat-3: var(--chart-cat-3);
+  --color-chart-cat-4: var(--chart-cat-4);
+
   --animate-fade-in: fade-in 0.4s ease-out;
   --animate-slide-up: slide-up 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
   --animate-scale-in: scale-in 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);

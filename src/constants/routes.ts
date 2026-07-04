@@ -15,12 +15,22 @@ export const ROUTES = {
   growing: '/growing',
   harvesting: '/harvesting',
   storage: '/storage',
+
   marketplace: '/marketplace',
+  productDetails: '/marketplace/:productId',
+  myListings: '/marketplace/my-listings',
+  buyerRequests: '/marketplace/buyer-requests',
+  favorites: '/marketplace/favorites',
+  orderHistory: '/marketplace/orders',
+
   aiCropDoctor: '/ai-crop-doctor',
   marketPrices: '/market-prices',
   weather: '/weather',
   messages: '/messages',
   notifications: '/notifications',
+  reports: '/reports',
+  analytics: '/analytics',
+  subscription: '/subscription',
   profile: '/profile',
   settings: '/settings',
 
@@ -28,3 +38,7 @@ export const ROUTES = {
 } as const
 
 export type RouteKey = keyof typeof ROUTES
+
+export function productDetailsRoute(productId: string): string {
+  return `/marketplace/${productId}`
+}

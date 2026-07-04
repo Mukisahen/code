@@ -1,41 +1,71 @@
 import type { ReactNode } from 'react'
-import { LogOut } from 'lucide-react'
-import { Logo } from '@/components/common/Logo'
+import { Link } from 'react-router-dom'
+import { LogOut, Bell, MessageCircle } from 'lucide-react'
 import { ThemeToggle } from '@/components/common/ThemeToggle'
 import { Button } from '@/components/common/Button'
+import { Sidebar } from '@/components/layout/Sidebar'
+import { BottomNav } from '@/components/layout/BottomNav'
 import { useAuth } from '@/hooks/useAuth'
+import { ROUTES } from '@/constants/routes'
+import { MOCK_NOTIFICATIONS } from '@/mocks/notifications'
 
 interface DashboardLayoutProps {
-  roleLabel: string
+  title: string
+  subtitle?: string
   children: ReactNode
+  actions?: ReactNode
 }
 
-export function DashboardLayout({ roleLabel, children }: DashboardLayoutProps) {
+export function DashboardLayout({ title, subtitle, children, actions }: DashboardLayoutProps) {
   const { user, logout } = useAuth()
+  const unreadCount = MOCK_NOTIFICATIONS.filter((n) => !n.read).length
+
+  if (!user) return null
 
   return (
-    <div className="min-h-dvh bg-surface-variant/30">
-      <header className="sticky top-0 z-20 border-b border-outline-variant/60 bg-background/90 backdrop-blur-md safe-top">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5 sm:px-8">
-          <Logo size="sm" />
-          <div className="flex items-center gap-2 sm:gap-3">
-            <span className="hidden rounded-full bg-primary-container px-3 py-1 text-xs font-semibold text-on-primary-container sm:inline-block">
-              {roleLabel}
-            </span>
-            <ThemeToggle />
-            <Button variant="text" size="sm" leadingIcon={<LogOut className="size-4" />} onClick={logout}>
-              <span className="hidden sm:inline">Log out</span>
-            </Button>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-dvh bg-surface-variant/30 lg:flex">
+      <Sidebar role={user.role} />
 
-      <main className="mx-auto max-w-6xl px-5 py-8 sm:px-8">
-        <p className="text-sm text-on-surface-variant">
-          Welcome back, <span className="font-semibold text-on-surface">{user?.fullName}</span>
-        </p>
-        {children}
-      </main>
+      <div className="flex min-h-dvh flex-1 flex-col">
+        <header className="sticky top-0 z-20 border-b border-outline-variant/60 bg-background/90 backdrop-blur-md safe-top">
+          <div className="flex items-center justify-between gap-3 px-5 py-3.5 sm:px-8">
+            <div className="min-w-0">
+              <h1 className="truncate text-lg font-bold text-on-surface sm:text-xl">{title}</h1>
+              {subtitle && <p className="truncate text-xs text-on-surface-variant sm:text-sm">{subtitle}</p>}
+            </div>
+            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+              {actions}
+              <Link
+                to={ROUTES.messages}
+                className="inline-flex size-10 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container"
+                aria-label="Messages"
+              >
+                <MessageCircle className="size-5" />
+              </Link>
+              <Link
+                to={ROUTES.notifications}
+                className="relative inline-flex size-10 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container"
+                aria-label="Notifications"
+              >
+                <Bell className="size-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute right-2 top-2 size-2 rounded-full bg-error" />
+                )}
+              </Link>
+              <ThemeToggle />
+              <div className="hidden sm:block">
+                <Button variant="text" size="sm" leadingIcon={<LogOut className="size-4" />} onClick={logout}>
+                  Log out
+                </Button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-6 pb-24 sm:px-8 lg:pb-8">{children}</main>
+      </div>
+
+      <BottomNav role={user.role} />
     </div>
   )
 }
