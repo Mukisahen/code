@@ -23,7 +23,7 @@ import { MarqueeTicker } from '@/components/common/MarqueeTicker'
 import { useAuth } from '@/hooks/useAuth'
 import { useLivePrices } from '@/hooks/useLivePrices'
 import { ROUTES } from '@/constants/routes'
-import { MOCK_WEATHER } from '@/mocks/weather'
+import { getWeatherForDistrict } from '@/mocks/weather'
 import { MOCK_TODAY_TASKS } from '@/mocks/tasks'
 import { MOCK_MARKET_PRICES } from '@/mocks/marketPrices'
 import { MOCK_NOTIFICATIONS } from '@/mocks/notifications'
@@ -56,7 +56,8 @@ const actionTone = {
 export default function FarmerDashboardPage() {
   const { user } = useAuth()
   const [tasks, setTasks] = useState(MOCK_TODAY_TASKS)
-  const WeatherIcon = WEATHER_ICONS[MOCK_WEATHER.condition]
+  const weather = getWeatherForDistrict(user?.district ?? 'Masindi')
+  const WeatherIcon = WEATHER_ICONS[weather.condition]
   const currentStage = JOURNEY_STAGES[1]
   const latestDiagnosis = MOCK_DIAGNOSIS_HISTORY[0]
   const { prices: livePrices, lastUpdated } = useLivePrices(MOCK_MARKET_PRICES)
@@ -99,12 +100,12 @@ export default function FarmerDashboardPage() {
         <Card className="lg:col-span-1">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm font-semibold text-on-surface-variant">{MOCK_WEATHER.district}</p>
-              <p className="mt-1 text-3xl font-bold text-on-surface">{MOCK_WEATHER.temperatureC}&deg;C</p>
+              <p className="text-sm font-semibold text-on-surface-variant">{weather.district}</p>
+              <p className="mt-1 text-3xl font-bold text-on-surface">{weather.temperatureC}&deg;C</p>
             </div>
             <WeatherIcon className="size-10 text-info" />
           </div>
-          <p className="mt-3 text-sm text-on-surface-variant">{MOCK_WEATHER.advisory}</p>
+          <p className="mt-3 text-sm text-on-surface-variant">{weather.advisory}</p>
           <Link
             to={ROUTES.weather}
             className="mt-3 inline-block text-sm font-semibold text-primary hover:underline"

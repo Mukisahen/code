@@ -1,7 +1,9 @@
+import { useMemo } from 'react'
 import { Sun, Cloud, CloudRain, CloudDrizzle, Droplets, Wind, Info } from 'lucide-react'
 import { DashboardLayout } from '@/layouts/DashboardLayout'
 import { Card } from '@/components/common/Card'
-import { MOCK_WEATHER } from '@/mocks/weather'
+import { getWeatherForDistrict } from '@/mocks/weather'
+import { useAuth } from '@/hooks/useAuth'
 import type { WeatherCondition } from '@/types/weather'
 
 const WEATHER_ICONS: Record<WeatherCondition, typeof Sun> = {
@@ -13,40 +15,42 @@ const WEATHER_ICONS: Record<WeatherCondition, typeof Sun> = {
 }
 
 export default function WeatherPage() {
-  const CurrentIcon = WEATHER_ICONS[MOCK_WEATHER.condition]
+  const { user } = useAuth()
+  const weather = useMemo(() => getWeatherForDistrict(user?.district ?? 'Masindi'), [user?.district])
+  const CurrentIcon = WEATHER_ICONS[weather.condition]
 
   return (
-    <DashboardLayout title="Weather" subtitle={`Forecast for ${MOCK_WEATHER.district}`}>
+    <DashboardLayout title="Weather" subtitle={`Forecast for ${weather.district}`}>
       <Card className="bg-gradient-to-br from-info/15 to-transparent">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-semibold text-on-surface-variant">{MOCK_WEATHER.district}</p>
-            <p className="text-4xl font-bold text-on-surface">{MOCK_WEATHER.temperatureC}&deg;C</p>
+            <p className="text-sm font-semibold text-on-surface-variant">{weather.district}</p>
+            <p className="text-4xl font-bold text-on-surface">{weather.temperatureC}&deg;C</p>
           </div>
           <CurrentIcon className="size-16 text-info" />
         </div>
         <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
           <div className="flex items-center gap-1.5">
-            <Droplets className="size-4 text-info" /> {MOCK_WEATHER.humidity}% humidity
+            <Droplets className="size-4 text-info" /> {weather.humidity}% humidity
           </div>
           <div className="flex items-center gap-1.5">
-            <Wind className="size-4 text-info" /> {MOCK_WEATHER.windKph} km/h
+            <Wind className="size-4 text-info" /> {weather.windKph} km/h
           </div>
           <div className="flex items-center gap-1.5">
-            <CloudRain className="size-4 text-info" /> {MOCK_WEATHER.rainChance}% rain
+            <CloudRain className="size-4 text-info" /> {weather.rainChance}% rain
           </div>
         </div>
       </Card>
 
       <Card className="mt-4 flex items-start gap-3">
         <Info className="mt-0.5 size-5 shrink-0 text-primary" />
-        <p className="text-sm text-on-surface">{MOCK_WEATHER.advisory}</p>
+        <p className="text-sm text-on-surface">{weather.advisory}</p>
       </Card>
 
       <Card className="mt-4">
         <h2 className="mb-3 font-bold text-on-surface">7-day forecast</h2>
         <div className="divide-y divide-outline-variant/60">
-          {MOCK_WEATHER.forecast.map((day) => {
+          {weather.forecast.map((day) => {
             const Icon = WEATHER_ICONS[day.condition]
             return (
               <div key={day.day} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">

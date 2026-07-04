@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react'
-import { Search, PackageSearch } from 'lucide-react'
+import { Search, PackageSearch, X } from 'lucide-react'
 import { DashboardLayout } from '@/layouts/DashboardLayout'
 import { ProductCard } from '@/components/marketplace/ProductCard'
 import { EmptyState } from '@/components/common/EmptyState'
 import { Input } from '@/components/common/Input'
+import { Button } from '@/components/common/Button'
 import { MOCK_PRODUCTS } from '@/mocks/products'
 import { PRODUCT_CATEGORY_LABELS, type ProductCategory } from '@/types/product'
 import { cn } from '@/utils/cn'
@@ -11,11 +12,17 @@ import { cn } from '@/utils/cn'
 type SortOption = 'newest' | 'price-asc' | 'price-desc'
 
 const CATEGORIES = Object.entries(PRODUCT_CATEGORY_LABELS) as [ProductCategory, string][]
+const DISTRICTS = [...new Set(MOCK_PRODUCTS.map((p) => p.district))].sort()
 
 export default function MarketplacePage() {
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState<ProductCategory | 'all'>('all')
+  const [district, setDistrict] = useState<string>('all')
+  const [minPrice, setMinPrice] = useState('')
+  const [maxPrice, setMaxPrice] = useState('')
   const [sort, setSort] = useState<SortOption>('newest')
+
+  const hasActiveFilters = category !== 'all' || district !== 'all' || minPrice !== '' || maxPrice !== ''
 
   const products = useMemo(() => {
     let list = MOCK_PRODUCTS.filter((p) => {
@@ -24,7 +31,10 @@ export default function MarketplacePage() {
         p.title.toLowerCase().includes(search.toLowerCase()) ||
         p.district.toLowerCase().includes(search.toLowerCase())
       const matchesCategory = category === 'all' || p.category === category
-      return matchesSearch && matchesCategory
+      const matchesDistrict = district === 'all' || p.district === district
+      const matchesMin = minPrice === '' || p.pricePerUnit >= Number(minPrice)
+      const matchesMax = maxPrice === '' || p.pricePerUnit <= Number(maxPrice)
+      return matchesSearch && matchesCategory && matchesDistrict && matchesMin && matchesMax
     })
 
     list = [...list].sort((a, b) => {
@@ -34,7 +44,14 @@ export default function MarketplacePage() {
     })
 
     return list
-  }, [search, category, sort])
+  }, [search, category, district, minPrice, maxPrice, sort])
+
+  function clearFilters() {
+    setCategory('all')
+    setDistrict('all')
+    setMinPrice('')
+    setMaxPrice('')
+  }
 
   return (
     <DashboardLayout title="Marketplace" subtitle="Buy and sell maize directly, no middlemen">
@@ -81,13 +98,77 @@ export default function MarketplacePage() {
         ))}
       </div>
 
+      <div className="mt-3 flex flex-wrap items-end gap-3">
+        <div>
+          <label htmlFor="district-filter" className="mb-1 block text-xs font-medium text-on-surface-variant">
+            District
+          </label>
+          <select
+            id="district-filter"
+            value={district}
+            onChange={(e) => setDistrict(e.target.value)}
+            className="h-11 rounded-md border border-outline-variant bg-surface px-3.5 text-sm text-on-surface outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+          >
+            <option value="all">All districts</option>
+            {DISTRICTS.map((d) => (
+              <option key={d} value={d}>
+                {d}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="min-price-filter" className="mb-1 block text-xs font-medium text-on-surface-variant">
+            Min price (UGX)
+          </label>
+          <input
+            id="min-price-filter"
+            type="number"
+            min={0}
+            placeholder="0"
+            value={minPrice}
+            onChange={(e) => setMinPrice(e.target.value)}
+            className="h-11 w-28 rounded-md border border-outline-variant bg-surface px-3.5 text-sm text-on-surface outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="max-price-filter" className="mb-1 block text-xs font-medium text-on-surface-variant">
+            Max price (UGX)
+          </label>
+          <input
+            id="max-price-filter"
+            type="number"
+            min={0}
+            placeholder="Any"
+            value={maxPrice}
+            onChange={(e) => setMaxPrice(e.target.value)}
+            className="h-11 w-28 rounded-md border border-outline-variant bg-surface px-3.5 text-sm text-on-surface outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
+
+        {hasActiveFilters && (
+          <Button variant="text" size="sm" leadingIcon={<X className="size-4" />} onClick={clearFilters}>
+            Clear filters
+          </Button>
+        )}
+      </div>
+
       <p className="mt-4 text-sm text-on-surface-variant">{products.length} listings found</p>
 
       {products.length === 0 ? (
         <EmptyState
           icon={PackageSearch}
           title="No listings match your search"
-          description="Try a different keyword or category."
+          description="Try a different keyword, district, price range or category."
+          action={
+            hasActiveFilters ? (
+              <Button variant="outlined" onClick={clearFilters}>
+                Clear filters
+              </Button>
+            ) : undefined
+          }
         />
       ) : (
         <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
