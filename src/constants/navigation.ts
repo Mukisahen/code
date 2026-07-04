@@ -4,6 +4,8 @@ import {
   Sprout,
   Wheat,
   Warehouse,
+  ShoppingCart,
+  Factory,
   Store,
   Stethoscope,
   TrendingUp,
@@ -40,6 +42,7 @@ const FARMER_NAV: NavItem[] = [
   { label: 'Growing', route: ROUTES.growing, icon: Wheat },
   { label: 'Harvesting', route: ROUTES.harvesting, icon: Wheat },
   { label: 'Storage', route: ROUTES.storage, icon: Warehouse },
+  { label: 'Selling', route: ROUTES.selling, icon: ShoppingCart },
   { label: 'Marketplace', route: ROUTES.marketplace, icon: Store },
   { label: 'AI Assistant', route: ROUTES.aiCropDoctor, icon: Stethoscope },
   { label: 'Market Prices', route: ROUTES.marketPrices, icon: TrendingUp },
@@ -61,6 +64,7 @@ const BUYER_NAV: NavItem[] = [
 
 const PROCESSOR_NAV: NavItem[] = [
   { label: 'Dashboard', route: ROUTES.processorDashboard, icon: LayoutDashboard },
+  { label: 'Processing', route: ROUTES.processing, icon: Factory },
   { label: 'Marketplace', route: ROUTES.marketplace, icon: Store },
   { label: 'My Requests', route: ROUTES.buyerRequests, icon: ClipboardList },
   { label: 'Order History', route: ROUTES.orderHistory, icon: History },

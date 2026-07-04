@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Store, FileBarChart, PieChart, Factory, Package, Truck } from 'lucide-react'
+import { Store, FileBarChart, Factory, Package, Truck } from 'lucide-react'
 import { DashboardLayout } from '@/layouts/DashboardLayout'
 import { Card } from '@/components/common/Card'
 import { StatTile } from '@/components/common/StatTile'
@@ -13,10 +13,10 @@ import { formatUGX } from '@/utils/format'
 import { cn } from '@/utils/cn'
 
 const QUICK_ACTIONS = [
-  { label: 'Marketplace', href: ROUTES.marketplace, icon: Store, tone: 'primary' as const },
-  { label: 'Post Bulk Request', href: ROUTES.buyerRequests, icon: Package, tone: 'secondary' as const },
-  { label: 'Reports', href: ROUTES.reports, icon: FileBarChart, tone: 'tertiary' as const },
-  { label: 'Analytics', href: ROUTES.analytics, icon: PieChart, tone: 'primary' as const },
+  { label: 'Processing', href: ROUTES.processing, icon: Factory, tone: 'primary' as const },
+  { label: 'Marketplace', href: ROUTES.marketplace, icon: Store, tone: 'secondary' as const },
+  { label: 'Post Bulk Request', href: ROUTES.buyerRequests, icon: Package, tone: 'tertiary' as const },
+  { label: 'Reports', href: ROUTES.reports, icon: FileBarChart, tone: 'primary' as const },
 ]
 
 const actionTone = {

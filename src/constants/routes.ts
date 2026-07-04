@@ -15,6 +15,8 @@ export const ROUTES = {
   growing: '/growing',
   harvesting: '/harvesting',
   storage: '/storage',
+  selling: '/selling',
+  processing: '/processing',
 
   marketplace: '/marketplace',
   productDetails: '/marketplace/:productId',

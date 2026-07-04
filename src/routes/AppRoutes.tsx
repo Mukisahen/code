@@ -20,6 +20,8 @@ const PlanningPage = lazy(() => import('@/pages/journey/PlanningPage'))
 const GrowingPage = lazy(() => import('@/pages/journey/GrowingPage'))
 const HarvestingPage = lazy(() => import('@/pages/journey/HarvestingPage'))
 const StoragePage = lazy(() => import('@/pages/journey/StoragePage'))
+const SellingPage = lazy(() => import('@/pages/journey/SellingPage'))
+const ProcessingPage = lazy(() => import('@/pages/journey/ProcessingPage'))
 
 const MarketplacePage = lazy(() => import('@/pages/marketplace/MarketplacePage'))
 const ProductDetailsPage = lazy(() => import('@/pages/marketplace/ProductDetailsPage'))
@@ -116,6 +118,22 @@ export function AppRoutes() {
           element={
             <ProtectedRoute allowedRoles={['farmer']}>
               <StoragePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.selling}
+          element={
+            <ProtectedRoute allowedRoles={['farmer']}>
+              <SellingPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.processing}
+          element={
+            <ProtectedRoute allowedRoles={['processor']}>
+              <ProcessingPage />
             </ProtectedRoute>
           }
         />
