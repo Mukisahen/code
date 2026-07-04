@@ -25,6 +25,7 @@ import {
   LifeBuoy,
   Activity,
   ScrollText,
+  Sparkles,
 } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
 import type { UserRole } from '@/types/user'
@@ -76,6 +77,7 @@ const PROCESSOR_NAV: NavItem[] = [
 
 const ADMIN_NAV: NavItem[] = [
   { label: 'Dashboard', route: ROUTES.adminDashboard, icon: LayoutDashboard },
+  { label: 'AI Assistant', route: ROUTES.adminDashboard + '#ai-assistant', icon: Sparkles },
   { label: 'Users', route: ROUTES.adminDashboard + '#users', icon: Users },
   { label: 'Marketplace', route: ROUTES.adminDashboard + '#marketplace', icon: Store },
   { label: 'Verification', route: ROUTES.adminDashboard + '#verification', icon: ShieldCheck },

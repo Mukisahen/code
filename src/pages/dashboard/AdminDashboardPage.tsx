@@ -9,6 +9,7 @@ import {
   ScrollText,
   Activity,
   LayoutGrid,
+  Sparkles,
   Check,
   X,
   Ban,
@@ -21,6 +22,7 @@ import { SectionHeader } from '@/components/common/SectionHeader'
 import { Badge } from '@/components/common/Badge'
 import { Button } from '@/components/common/Button'
 import { BarChart } from '@/components/charts/BarChart'
+import { AdminAskAiChat } from '@/components/dashboard/AdminAskAiChat'
 import { ROUTES } from '@/constants/routes'
 import { MOCK_ADMIN_USERS, MOCK_VERIFICATION_REQUESTS, MOCK_AUDIT_LOGS, MOCK_SUPPORT_TICKETS, MOCK_SYSTEM_HEALTH, MOCK_SUBSCRIPTIONS } from '@/mocks/admin'
 import { MOCK_PRODUCTS } from '@/mocks/products'
@@ -28,7 +30,16 @@ import { USERS_BY_ROLE, PLATFORM_GROWTH } from '@/mocks/analytics'
 import { formatUGX, formatRelativeTime } from '@/utils/format'
 import { cn } from '@/utils/cn'
 
-type Tab = 'overview' | 'users' | 'marketplace' | 'verification' | 'subscriptions' | 'support' | 'audit-logs' | 'system-health'
+type Tab =
+  | 'overview'
+  | 'users'
+  | 'marketplace'
+  | 'verification'
+  | 'subscriptions'
+  | 'support'
+  | 'audit-logs'
+  | 'system-health'
+  | 'ai-assistant'
 
 const TABS: { key: Tab; label: string; icon: typeof Users }[] = [
   { key: 'overview', label: 'Overview', icon: LayoutGrid },
@@ -39,6 +50,7 @@ const TABS: { key: Tab; label: string; icon: typeof Users }[] = [
   { key: 'support', label: 'Support', icon: LifeBuoy },
   { key: 'audit-logs', label: 'Audit Logs', icon: ScrollText },
   { key: 'system-health', label: 'System Health', icon: Activity },
+  { key: 'ai-assistant', label: 'AI Assistant', icon: Sparkles },
 ]
 
 const STATUS_TONE = { active: 'success', pending: 'warning', suspended: 'error' } as const
@@ -284,6 +296,8 @@ export default function AdminDashboardPage() {
           </table>
         </Card>
       )}
+
+      {tab === 'ai-assistant' && <AdminAskAiChat />}
 
       {tab === 'system-health' && (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

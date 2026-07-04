@@ -132,8 +132,8 @@ export default function LandingPage() {
               />
             </div>
             <div className="absolute -bottom-5 left-5 right-5 rounded-2xl bg-surface/95 px-5 py-3.5 shadow-elevation-2 backdrop-blur-sm sm:left-8 sm:right-auto sm:w-72">
-              <p className="text-sm font-bold text-on-surface">&ldquo;Farm Bhade helped me sell my whole harvest without a middleman.&rdquo;</p>
-              <p className="mt-1 text-xs text-on-surface-variant">Nakato Grace, maize farmer &middot; Masindi</p>
+              <p className="text-sm font-bold text-on-surface">&ldquo;Sold my whole harvest without a middleman — straight to a buyer, at a fair price.&rdquo;</p>
+              <p className="mt-1 text-xs text-on-surface-variant">A Farm Bhade success story</p>
             </div>
           </div>
         </section>
