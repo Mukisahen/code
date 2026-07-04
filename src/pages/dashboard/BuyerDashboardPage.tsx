@@ -5,7 +5,9 @@ import { Card } from '@/components/common/Card'
 import { StatTile } from '@/components/common/StatTile'
 import { SectionHeader } from '@/components/common/SectionHeader'
 import { Badge } from '@/components/common/Badge'
+import { LiveBadge } from '@/components/common/LiveBadge'
 import { useAuth } from '@/hooks/useAuth'
+import { useLivePrices } from '@/hooks/useLivePrices'
 import { ROUTES } from '@/constants/routes'
 import { MOCK_BUYER_REQUESTS, MOCK_ORDERS } from '@/mocks/orders'
 import { MOCK_MARKET_PRICES } from '@/mocks/marketPrices'
@@ -33,7 +35,8 @@ export default function BuyerDashboardPage() {
   const myRequests = MOCK_BUYER_REQUESTS.filter((r) => r.status !== 'closed').slice(0, 3)
   const recentOrders = MOCK_ORDERS.slice(0, 3)
   const favoriteProducts = MOCK_PRODUCTS.filter((p) => favoriteIds.includes(p.id))
-  const topPrices = MOCK_MARKET_PRICES.slice(0, 3)
+  const { prices: livePrices, lastUpdated } = useLivePrices(MOCK_MARKET_PRICES)
+  const topPrices = livePrices.slice(0, 3)
 
   return (
     <DashboardLayout title="Buyer Dashboard" subtitle={`Welcome back, ${user?.fullName}`}>
@@ -77,7 +80,7 @@ export default function BuyerDashboardPage() {
         </Card>
 
         <Card className="lg:col-span-1">
-          <SectionHeader title="Market prices" seeAllHref={ROUTES.marketPrices} />
+          <SectionHeader title="Market prices" seeAllHref={ROUTES.marketPrices} right={<LiveBadge lastUpdated={lastUpdated} />} />
           <ul className="space-y-3">
             {topPrices.map((price) => (
               <li key={price.id} className="flex items-center justify-between text-sm">

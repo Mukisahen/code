@@ -3,16 +3,19 @@ import { TrendingUp } from 'lucide-react'
 import { DashboardLayout } from '@/layouts/DashboardLayout'
 import { Card } from '@/components/common/Card'
 import { Sparkline } from '@/components/charts/Sparkline'
+import { LiveBadge } from '@/components/common/LiveBadge'
+import { useLivePrices } from '@/hooks/useLivePrices'
 import { MOCK_MARKET_PRICES, PRICE_TREND_7D } from '@/mocks/marketPrices'
 import { cn } from '@/utils/cn'
 
 export default function MarketPricesPage() {
   const [district, setDistrict] = useState('all')
   const districts = useMemo(() => ['all', ...new Set(MOCK_MARKET_PRICES.map((p) => p.district))], [])
+  const { prices, lastUpdated } = useLivePrices(MOCK_MARKET_PRICES)
 
   const filtered = useMemo(
-    () => (district === 'all' ? MOCK_MARKET_PRICES : MOCK_MARKET_PRICES.filter((p) => p.district === district)),
-    [district],
+    () => (district === 'all' ? prices : prices.filter((p) => p.district === district)),
+    [district, prices],
   )
 
   return (
@@ -25,6 +28,7 @@ export default function MarketPricesPage() {
             </p>
             <p className="mt-1 text-2xl font-bold text-on-surface">UGX {PRICE_TREND_7D.at(-1)?.toLocaleString()}/kg</p>
           </div>
+          <LiveBadge lastUpdated={lastUpdated} />
         </div>
         <Sparkline
           data={PRICE_TREND_7D}
@@ -63,12 +67,12 @@ export default function MarketPricesPage() {
               <tr key={price.id} className="border-b border-outline-variant/40 last:border-0">
                 <td className="px-4 py-3 font-medium text-on-surface">{price.district}</td>
                 <td className="px-4 py-3 text-on-surface-variant">{price.category}</td>
-                <td className="px-4 py-3 text-right font-semibold text-on-surface">
+                <td className="px-4 py-3 text-right font-semibold text-on-surface transition-colors duration-500">
                   {price.pricePerKg.toLocaleString()}
                 </td>
                 <td
                   className={cn(
-                    'px-4 py-3 text-right font-semibold',
+                    'px-4 py-3 text-right font-semibold transition-colors duration-500',
                     price.changePercent >= 0 ? 'text-primary' : 'text-error',
                   )}
                 >

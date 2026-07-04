@@ -1,17 +1,20 @@
 import { useRef, useState } from 'react'
-import { Camera, Upload, Loader2, Sprout, RotateCcw, History as HistoryIcon } from 'lucide-react'
+import { Camera, Upload, Loader2, Sprout, RotateCcw, History as HistoryIcon, Sparkles } from 'lucide-react'
 import { DashboardLayout } from '@/layouts/DashboardLayout'
 import { Card } from '@/components/common/Card'
 import { Button } from '@/components/common/Button'
 import { Badge } from '@/components/common/Badge'
 import { EmptyState } from '@/components/common/EmptyState'
+import { AskAiChat } from '@/components/crop-doctor/AskAiChat'
 import { MOCK_DIAGNOSIS_HISTORY } from '@/mocks/diagnoses'
 import type { CropDiagnosis } from '@/types/cropDoctor'
 import { formatRelativeTime } from '@/utils/format'
 import { cn } from '@/utils/cn'
 
 type Mode = 'capture' | 'analyzing' | 'result'
-type Tab = 'diagnose' | 'history'
+type Tab = 'diagnose' | 'ask-ai' | 'history'
+
+const TAB_LABEL: Record<Tab, string> = { diagnose: 'Diagnose', 'ask-ai': 'Ask AI', history: 'History' }
 
 const SEVERITY_TONE: Record<CropDiagnosis['severity'], 'success' | 'warning' | 'error'> = {
   healthy: 'success',
@@ -102,21 +105,24 @@ export default function AiCropDoctorPage() {
   }
 
   return (
-    <DashboardLayout title="AI Crop Doctor" subtitle="Diagnose crop problems instantly with your camera">
+    <DashboardLayout title="AI Assistant" subtitle="Diagnose crop problems and get farming advice, in English or Luganda">
       <div className="mb-5 flex gap-2 rounded-full bg-surface-variant p-1 w-fit">
-        {(['diagnose', 'history'] as Tab[]).map((t) => (
+        {(['diagnose', 'ask-ai', 'history'] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
             className={cn(
-              'rounded-full px-4 py-1.5 text-sm font-semibold capitalize transition-colors',
+              'flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold transition-colors',
               tab === t ? 'bg-surface text-on-surface shadow-elevation-1' : 'text-on-surface-variant',
             )}
           >
-            {t}
+            {t === 'ask-ai' && <Sparkles className="size-3.5" />}
+            {TAB_LABEL[t]}
           </button>
         ))}
       </div>
+
+      {tab === 'ask-ai' && <AskAiChat />}
 
       {tab === 'diagnose' && (
         <Card className="mx-auto max-w-xl">

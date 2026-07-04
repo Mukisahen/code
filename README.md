@@ -54,6 +54,11 @@ src/
 The app serves four roles, each with its own dashboard: **Farmer**, **Buyer**,
 **Processor** and **Administrator**.
 
+## Assets
+
+`src/assets/images/farmer-hero.jpg` (and its `-sm` variant) is a licensed Adobe
+Stock photo (asset ID `329042654`), used under a standard Adobe Stock license.
+
 ## Status
 
 Built module by module. Current modules: folder structure & scaffold, theme

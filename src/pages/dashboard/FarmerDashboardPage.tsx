@@ -17,7 +17,9 @@ import { DashboardLayout } from '@/layouts/DashboardLayout'
 import { Card } from '@/components/common/Card'
 import { Badge } from '@/components/common/Badge'
 import { SectionHeader } from '@/components/common/SectionHeader'
+import { LiveBadge } from '@/components/common/LiveBadge'
 import { useAuth } from '@/hooks/useAuth'
+import { useLivePrices } from '@/hooks/useLivePrices'
 import { ROUTES } from '@/constants/routes'
 import { MOCK_WEATHER } from '@/mocks/weather'
 import { MOCK_TODAY_TASKS } from '@/mocks/tasks'
@@ -55,7 +57,8 @@ export default function FarmerDashboardPage() {
   const WeatherIcon = WEATHER_ICONS[MOCK_WEATHER.condition]
   const currentStage = JOURNEY_STAGES[1]
   const latestDiagnosis = MOCK_DIAGNOSIS_HISTORY[0]
-  const topPrices = MOCK_MARKET_PRICES.slice(0, 4)
+  const { prices: livePrices, lastUpdated } = useLivePrices(MOCK_MARKET_PRICES)
+  const topPrices = livePrices.slice(0, 4)
   const recentNotifications = MOCK_NOTIFICATIONS.slice(0, 3)
 
   function toggleTask(id: string) {
@@ -154,7 +157,7 @@ export default function FarmerDashboardPage() {
 
         {/* Market prices */}
         <Card className="lg:col-span-1">
-          <SectionHeader title="Market prices" seeAllHref={ROUTES.marketPrices} />
+          <SectionHeader title="Market prices" seeAllHref={ROUTES.marketPrices} right={<LiveBadge lastUpdated={lastUpdated} />} />
           <ul className="space-y-3">
             {topPrices.map((price) => (
               <li key={price.id} className="flex items-center justify-between text-sm">

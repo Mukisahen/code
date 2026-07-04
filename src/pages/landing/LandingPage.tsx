@@ -20,6 +20,7 @@ import { Card } from '@/components/common/Card'
 import { ROUTES } from '@/constants/routes'
 import { APP_TAGLINE, APP_BRAND_PROMISE } from '@/constants/app'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
+import farmerHero from '@/assets/images/farmer-hero.jpg'
 
 const JOURNEY = [
   { icon: Sprout, label: 'Planning', color: 'text-primary' },
@@ -84,28 +85,56 @@ export default function LandingPage() {
 
       <main>
         {/* Hero */}
-        <section className="mx-auto max-w-6xl px-5 pb-12 pt-10 text-center sm:px-8 sm:pb-16 sm:pt-16">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-container px-3.5 py-1.5 text-xs font-semibold text-on-primary-container">
-            <Sprout className="size-3.5" /> {APP_BRAND_PROMISE}
-          </span>
-          <h1 className="mx-auto mt-5 max-w-3xl text-4xl font-extrabold leading-tight tracking-tight text-on-surface sm:text-6xl">
-            The AI-powered digital home for Uganda&apos;s maize farmers
-          </h1>
-          <p className="mx-auto mt-5 max-w-xl text-base text-on-surface-variant sm:text-lg">
-            {APP_TAGLINE} — plan, grow, harvest, store, sell and process your maize, all backed by AI
-            guidance and a trusted marketplace.
-          </p>
-          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link to={ROUTES.onboarding} onClick={() => setHasSeenOnboarding(true)} className="w-full sm:w-auto">
-              <Button size="lg" fullWidth trailingIcon={<ArrowRight className="size-5" />}>
-                Get Started Free
-              </Button>
-            </Link>
-            <Link to={ROUTES.login} className="w-full sm:w-auto">
-              <Button variant="outlined" size="lg" fullWidth>
-                I already have an account
-              </Button>
-            </Link>
+        <section className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-5 pb-12 pt-10 sm:px-8 sm:pb-16 sm:pt-16 lg:grid-cols-2 lg:gap-8">
+          <div className="text-center lg:text-left">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-container px-3.5 py-1.5 text-xs font-semibold text-on-primary-container">
+              <Sprout className="size-3.5" /> {APP_BRAND_PROMISE}
+            </span>
+            <h1 className="mx-auto mt-5 max-w-3xl text-4xl font-extrabold leading-tight tracking-tight text-on-surface sm:text-6xl lg:mx-0">
+              The AI-powered digital home for Uganda&apos;s maize farmers
+            </h1>
+            <p className="mx-auto mt-5 max-w-xl text-base text-on-surface-variant sm:text-lg lg:mx-0">
+              {APP_TAGLINE} — plan, grow, harvest, store, sell and process your maize, all backed by AI
+              guidance and a trusted marketplace.
+            </p>
+            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start">
+              <Link to={ROUTES.onboarding} onClick={() => setHasSeenOnboarding(true)} className="w-full sm:w-auto">
+                <Button size="lg" fullWidth trailingIcon={<ArrowRight className="size-5" />}>
+                  Get Started Free
+                </Button>
+              </Link>
+              <Link to={ROUTES.login} className="w-full sm:w-auto">
+                <Button variant="outlined" size="lg" fullWidth>
+                  I already have an account
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          <div className="relative mb-8 lg:mb-0">
+            <div className="relative aspect-[4/3] overflow-hidden rounded-3xl shadow-elevation-3 sm:aspect-[16/11]">
+              <img
+                src={farmerHero}
+                alt="A Ugandan maize farmer holding freshly harvested cobs in his field"
+                className="size-full object-cover"
+                loading="eager"
+              />
+              <div
+                className="absolute inset-0"
+                style={{
+                  background:
+                    'linear-gradient(200deg, rgba(30,122,52,0.55) 0%, rgba(30,122,52,0.05) 35%, rgba(30,122,52,0) 55%, rgba(21,32,17,0.55) 100%)',
+                }}
+              />
+              <div
+                className="absolute inset-0"
+                style={{ background: 'linear-gradient(0deg, rgba(255,192,46,0.28) 0%, rgba(255,192,46,0) 45%)' }}
+              />
+            </div>
+            <div className="absolute -bottom-5 left-5 right-5 rounded-2xl bg-surface/95 px-5 py-3.5 shadow-elevation-2 backdrop-blur-sm sm:left-8 sm:right-auto sm:w-72">
+              <p className="text-sm font-bold text-on-surface">&ldquo;Farm Bhade helped me sell my whole harvest without a middleman.&rdquo;</p>
+              <p className="mt-1 text-xs text-on-surface-variant">Nakato Grace, maize farmer &middot; Masindi</p>
+            </div>
           </div>
         </section>
 

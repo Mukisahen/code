@@ -41,7 +41,7 @@ const FARMER_NAV: NavItem[] = [
   { label: 'Harvesting', route: ROUTES.harvesting, icon: Wheat },
   { label: 'Storage', route: ROUTES.storage, icon: Warehouse },
   { label: 'Marketplace', route: ROUTES.marketplace, icon: Store },
-  { label: 'AI Crop Doctor', route: ROUTES.aiCropDoctor, icon: Stethoscope },
+  { label: 'AI Assistant', route: ROUTES.aiCropDoctor, icon: Stethoscope },
   { label: 'Market Prices', route: ROUTES.marketPrices, icon: TrendingUp },
   { label: 'Weather', route: ROUTES.weather, icon: CloudSun },
   { label: 'Messages', route: ROUTES.messages, icon: MessageCircle },
