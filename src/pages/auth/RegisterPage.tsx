@@ -11,6 +11,7 @@ import { dashboardRouteForRole } from '@/utils/roleRoutes'
 import { UGANDA_MAIZE_DISTRICTS } from '@/mocks/districts'
 import type { UserRole } from '@/types/user'
 import { cn } from '@/utils/cn'
+import { validateFullName, validatePhone, validatePassword, validateConfirmPassword } from '@/utils/validation'
 
 const ROLE_OPTIONS: { value: UserRole; label: string; icon: typeof Sprout }[] = [
   { value: 'farmer', label: 'Farmer', icon: Sprout },
@@ -19,26 +20,49 @@ const ROLE_OPTIONS: { value: UserRole; label: string; icon: typeof Sprout }[] = 
   { value: 'admin', label: 'Admin', icon: ShieldCheck },
 ]
 
+interface FieldErrors {
+  fullName?: string
+  phone?: string
+  password?: string
+  confirmPassword?: string
+}
+
 export default function RegisterPage() {
   const navigate = useNavigate()
   const { register } = useAuth()
   const [fullName, setFullName] = useState('')
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [district, setDistrict] = useState<string>(UGANDA_MAIZE_DISTRICTS[0])
   const [role, setRole] = useState<UserRole>('farmer')
-  const [error, setError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
+  const [formError, setFormError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  function clearFieldError(field: keyof FieldErrors) {
+    setFieldErrors((prev) => (prev[field] ? { ...prev, [field]: undefined } : prev))
+  }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    setError(null)
+    setFormError(null)
+
+    const nextErrors: FieldErrors = {
+      fullName: validateFullName(fullName) ?? undefined,
+      phone: validatePhone(phone) ?? undefined,
+      password: validatePassword(password) ?? undefined,
+      confirmPassword: validateConfirmPassword(password, confirmPassword) ?? undefined,
+    }
+    setFieldErrors(nextErrors)
+    if (Object.values(nextErrors).some(Boolean)) return
+
     setIsSubmitting(true)
     try {
       const user = await register({ fullName, phone, password, role, district })
       navigate(dashboardRouteForRole(user.role), { replace: true })
     } catch (err) {
-      setError(err instanceof AuthError ? err.message : 'Something went wrong. Please try again.')
+      setFormError(err instanceof AuthError ? err.message : 'Something went wrong. Please try again.')
     } finally {
       setIsSubmitting(false)
     }
@@ -74,7 +98,11 @@ export default function RegisterPage() {
           placeholder="e.g. Nakato Grace"
           leadingIcon={<User className="size-4.5" />}
           value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
+          onChange={(e) => {
+            setFullName(e.target.value)
+            clearFieldError('fullName')
+          }}
+          error={fieldErrors.fullName}
           autoComplete="name"
           required
         />
@@ -84,7 +112,11 @@ export default function RegisterPage() {
           placeholder="+256 7XX XXX XXX"
           leadingIcon={<Phone className="size-4.5" />}
           value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          onChange={(e) => {
+            setPhone(e.target.value)
+            clearFieldError('phone')
+          }}
+          error={fieldErrors.phone}
           autoComplete="tel"
           required
         />
@@ -113,18 +145,35 @@ export default function RegisterPage() {
         <Input
           label="Password"
           type="password"
-          placeholder="Create a password"
+          placeholder="At least 8 characters, with a number"
           leadingIcon={<Lock className="size-4.5" />}
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) => {
+            setPassword(e.target.value)
+            clearFieldError('password')
+          }}
+          error={fieldErrors.password}
           autoComplete="new-password"
-          minLength={6}
+          required
+        />
+        <Input
+          label="Confirm password"
+          type="password"
+          placeholder="Re-enter your password"
+          leadingIcon={<Lock className="size-4.5" />}
+          value={confirmPassword}
+          onChange={(e) => {
+            setConfirmPassword(e.target.value)
+            clearFieldError('confirmPassword')
+          }}
+          error={fieldErrors.confirmPassword}
+          autoComplete="new-password"
           required
         />
 
-        {error && (
+        {formError && (
           <p role="alert" className="rounded-md bg-error-container px-3.5 py-2.5 text-sm text-on-error-container">
-            {error}
+            {formError}
           </p>
         )}
 

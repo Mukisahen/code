@@ -6,6 +6,7 @@ import { StatTile } from '@/components/common/StatTile'
 import { SectionHeader } from '@/components/common/SectionHeader'
 import { Badge } from '@/components/common/Badge'
 import { LiveBadge } from '@/components/common/LiveBadge'
+import { PromoBanner } from '@/components/common/PromoBanner'
 import { useAuth } from '@/hooks/useAuth'
 import { useLivePrices } from '@/hooks/useLivePrices'
 import { ROUTES } from '@/constants/routes'
@@ -40,7 +41,9 @@ export default function BuyerDashboardPage() {
 
   return (
     <DashboardLayout title="Buyer Dashboard" subtitle={`Welcome back, ${user?.fullName}`}>
-      <div className="grid grid-cols-4 gap-3">
+      <PromoBanner />
+
+      <div className="mt-4 grid grid-cols-4 gap-3">
         {QUICK_ACTIONS.map(({ label, href, icon: Icon, tone }) => (
           <Link
             key={label}

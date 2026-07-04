@@ -9,24 +9,34 @@ import { AuthError } from '@/services/authService'
 import { ROUTES } from '@/constants/routes'
 import { dashboardRouteForRole } from '@/utils/roleRoutes'
 import { MOCK_PASSWORD } from '@/mocks/users'
+import { validatePhone } from '@/utils/validation'
 
 export default function LoginPage() {
   const navigate = useNavigate()
   const { login } = useAuth()
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
+  const [phoneError, setPhoneError] = useState<string | null>(null)
+  const [passwordError, setPasswordError] = useState<string | null>(null)
+  const [formError, setFormError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    setError(null)
+    setFormError(null)
+
+    const phoneValidationError = validatePhone(phone)
+    const passwordValidationError = password ? null : 'Password is required.'
+    setPhoneError(phoneValidationError)
+    setPasswordError(passwordValidationError)
+    if (phoneValidationError || passwordValidationError) return
+
     setIsSubmitting(true)
     try {
       const user = await login({ phone, password })
       navigate(dashboardRouteForRole(user.role), { replace: true })
     } catch (err) {
-      setError(err instanceof AuthError ? err.message : 'Something went wrong. Please try again.')
+      setFormError(err instanceof AuthError ? err.message : 'Something went wrong. Please try again.')
     } finally {
       setIsSubmitting(false)
     }
@@ -41,7 +51,11 @@ export default function LoginPage() {
           placeholder="+256 7XX XXX XXX"
           leadingIcon={<Phone className="size-4.5" />}
           value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          onChange={(e) => {
+            setPhone(e.target.value)
+            if (phoneError) setPhoneError(null)
+          }}
+          error={phoneError ?? undefined}
           autoComplete="tel"
           required
         />
@@ -51,14 +65,18 @@ export default function LoginPage() {
           placeholder="Enter your password"
           leadingIcon={<Lock className="size-4.5" />}
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) => {
+            setPassword(e.target.value)
+            if (passwordError) setPasswordError(null)
+          }}
+          error={passwordError ?? undefined}
           autoComplete="current-password"
           required
         />
 
-        {error && (
+        {formError && (
           <p role="alert" className="rounded-md bg-error-container px-3.5 py-2.5 text-sm text-on-error-container">
-            {error}
+            {formError}
           </p>
         )}
 

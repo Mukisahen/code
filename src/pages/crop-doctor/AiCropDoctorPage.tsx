@@ -1,5 +1,14 @@
 import { useRef, useState } from 'react'
-import { Camera, Upload, Loader2, Sprout, RotateCcw, History as HistoryIcon, Sparkles } from 'lucide-react'
+import {
+  Camera,
+  Upload,
+  Loader2,
+  Sprout,
+  RotateCcw,
+  History as HistoryIcon,
+  Sparkles,
+  ImageOff,
+} from 'lucide-react'
 import { DashboardLayout } from '@/layouts/DashboardLayout'
 import { Card } from '@/components/common/Card'
 import { Button } from '@/components/common/Button'
@@ -9,9 +18,10 @@ import { AskAiChat } from '@/components/crop-doctor/AskAiChat'
 import { MOCK_DIAGNOSIS_HISTORY } from '@/mocks/diagnoses'
 import type { CropDiagnosis } from '@/types/cropDoctor'
 import { formatRelativeTime } from '@/utils/format'
+import { looksLikeCropPhoto } from '@/utils/imageHeuristics'
 import { cn } from '@/utils/cn'
 
-type Mode = 'capture' | 'analyzing' | 'result'
+type Mode = 'capture' | 'analyzing' | 'result' | 'unrecognized'
 type Tab = 'diagnose' | 'ask-ai' | 'history'
 
 const TAB_LABEL: Record<Tab, string> = { diagnose: 'Diagnose', 'ask-ai': 'Ask AI', history: 'History' }
@@ -78,24 +88,32 @@ export default function AiCropDoctorPage() {
   const [result, setResult] = useState<CropDiagnosis | null>(null)
   const [history, setHistory] = useState<CropDiagnosis[]>(MOCK_DIAGNOSIS_HISTORY)
 
-  function handleFileSelected(file: File | undefined) {
+  async function handleFileSelected(file: File | undefined) {
     if (!file) return
     const url = URL.createObjectURL(file)
     setPreviewUrl(url)
     setMode('analyzing')
 
-    setTimeout(() => {
-      const template = MOCK_RESULT_POOL[Math.floor(Math.random() * MOCK_RESULT_POOL.length)]
-      const diagnosis: CropDiagnosis = {
-        ...template,
-        id: `diag-${Date.now()}`,
-        imageColor: '#4C7A3A',
-        createdAt: new Date().toISOString(),
-      }
-      setResult(diagnosis)
-      setHistory((prev) => [diagnosis, ...prev])
-      setMode('result')
-    }, 1800)
+    const [isCropPhoto] = await Promise.all([
+      looksLikeCropPhoto(file).catch(() => true),
+      new Promise((resolve) => setTimeout(resolve, 1800)),
+    ])
+
+    if (!isCropPhoto) {
+      setMode('unrecognized')
+      return
+    }
+
+    const template = MOCK_RESULT_POOL[Math.floor(Math.random() * MOCK_RESULT_POOL.length)]
+    const diagnosis: CropDiagnosis = {
+      ...template,
+      id: `diag-${Date.now()}`,
+      imageColor: '#4C7A3A',
+      createdAt: new Date().toISOString(),
+    }
+    setResult(diagnosis)
+    setHistory((prev) => [diagnosis, ...prev])
+    setMode('result')
   }
 
   function reset() {
@@ -176,6 +194,24 @@ export default function AiCropDoctorPage() {
                 <Loader2 className="size-5 animate-spin text-primary" />
                 <span className="text-sm font-semibold">Analyzing image with AI Crop Doctor&hellip;</span>
               </div>
+            </div>
+          )}
+
+          {mode === 'unrecognized' && previewUrl && (
+            <div className="flex flex-col items-center gap-4 py-6 text-center">
+              <img src={previewUrl} alt="Uploaded photo" className="h-52 w-full rounded-lg object-cover opacity-60" />
+              <span className="flex size-14 items-center justify-center rounded-full bg-error-container text-on-error-container">
+                <ImageOff className="size-7" />
+              </span>
+              <div>
+                <p className="font-bold text-on-surface">We couldn&apos;t detect a maize plant in this photo</p>
+                <p className="mt-1 max-w-xs text-sm text-on-surface-variant">
+                  Try a clear, well-lit photo of a maize leaf, cob, stalk or field — filling most of the frame.
+                </p>
+              </div>
+              <Button variant="outlined" leadingIcon={<RotateCcw className="size-4" />} onClick={reset}>
+                Try another photo
+              </Button>
             </div>
           )}
 

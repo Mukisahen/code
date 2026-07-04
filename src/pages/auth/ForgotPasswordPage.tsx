@@ -6,9 +6,11 @@ import { Input } from '@/components/common/Input'
 import { Button } from '@/components/common/Button'
 import { requestPasswordReset, AuthError } from '@/services/authService'
 import { ROUTES } from '@/constants/routes'
+import { validatePhone } from '@/utils/validation'
 
 export default function ForgotPasswordPage() {
   const [phone, setPhone] = useState('')
+  const [phoneError, setPhoneError] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSent, setIsSent] = useState(false)
@@ -16,6 +18,11 @@ export default function ForgotPasswordPage() {
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
     setError(null)
+
+    const validationError = validatePhone(phone)
+    setPhoneError(validationError)
+    if (validationError) return
+
     setIsSubmitting(true)
     try {
       await requestPasswordReset(phone)
@@ -56,7 +63,11 @@ export default function ForgotPasswordPage() {
           placeholder="+256 7XX XXX XXX"
           leadingIcon={<Phone className="size-4.5" />}
           value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          onChange={(e) => {
+            setPhone(e.target.value)
+            if (phoneError) setPhoneError(null)
+          }}
+          error={phoneError ?? undefined}
           autoComplete="tel"
           required
         />

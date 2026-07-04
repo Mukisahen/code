@@ -18,6 +18,8 @@ import { Card } from '@/components/common/Card'
 import { Badge } from '@/components/common/Badge'
 import { SectionHeader } from '@/components/common/SectionHeader'
 import { LiveBadge } from '@/components/common/LiveBadge'
+import { PromoBanner } from '@/components/common/PromoBanner'
+import { MarqueeTicker } from '@/components/common/MarqueeTicker'
 import { useAuth } from '@/hooks/useAuth'
 import { useLivePrices } from '@/hooks/useLivePrices'
 import { ROUTES } from '@/constants/routes'
@@ -67,8 +69,17 @@ export default function FarmerDashboardPage() {
 
   return (
     <DashboardLayout title="Farmer Dashboard" subtitle={`Welcome back, ${user?.fullName}`}>
+      <MarqueeTicker
+        items={livePrices.map(
+          (p) => `${p.category} · ${p.district}: UGX ${p.pricePerKg.toLocaleString()}/kg (${p.changePercent >= 0 ? '+' : ''}${p.changePercent}%)`,
+        )}
+        className="mb-4"
+      />
+
+      <PromoBanner />
+
       {/* Quick actions */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="mt-4 grid grid-cols-4 gap-3">
         {QUICK_ACTIONS.map(({ label, href, icon: Icon, tone }) => (
           <Link
             key={label}

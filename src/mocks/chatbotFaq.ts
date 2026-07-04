@@ -86,6 +86,42 @@ export const CHATBOT_FAQ: FaqEntry[] = [
     },
   },
   {
+    id: 'faq-seed-selection',
+    keywords: ['seed', 'variety', 'hybrid', 'which seed', 'ensigo'],
+    question: {
+      en: 'Which maize seed variety should I plant?',
+      lg: 'Nsimba ku ngeri ki eya nsigo za kasooli?',
+    },
+    answer: {
+      en: 'Certified hybrids like Longe 10H give strong yields in most districts and tolerate common diseases better than recycled seed. Buy certified seed each season rather than replanting saved grain — yields drop noticeably after the first generation.',
+      lg: 'Ensigo ez’ekikula ekirongoosezze nga Longe 10H ziwa ebibala bingi mu bitundu bingi era zigumira endwadde ez’awamu okusinga ensigo eziddiŋŋanwa. Gula ensigo ezaakakasibwa buli kyeya mu kifo ky’okuddamu okusimba empeke z’osobozezza — omuganyulo gukendeera nnyo oluvannyuma lw’omulembe ogusooka.',
+    },
+  },
+  {
+    id: 'faq-storage-pests',
+    keywords: ['weevil', 'storage pest', 'grain store', 'obuwuka', 'okutereka'],
+    question: {
+      en: 'How do I protect stored maize from weevils?',
+      lg: 'Nkuuma ntya kasooli akaterekeddwa okuva ku buwuka?',
+    },
+    answer: {
+      en: 'Dry grain to 13% moisture before storing, use hermetic (airtight) bags like PICS bags where possible, and keep sacks off the floor on pallets. Inspect stored grain monthly for weevil holes or heating.',
+      lg: 'Kalira empeke okutuuka ku 13% ey’amazzi nga tonannyika mu tterekero, kozesa nga kisoboka ensawo ezisibiddwa obulungi nga PICS, era oteeke ensawo waggulu ku mbaawo so si wansi ku ttaka. Kebera empeke buli mwezi olabe obama bw’obuwuka oba ebbugumu.',
+    },
+  },
+  {
+    id: 'faq-selling-price',
+    keywords: ['sell', 'best price', 'when to sell', 'okutunda'],
+    question: {
+      en: 'When is the best time to sell my maize?',
+      lg: 'Kiseera ki ekisinga obulungi okutunda kasooli kange?',
+    },
+    answer: {
+      en: 'Prices are usually lowest right after harvest when supply is high, and rise a few months later. If you can store grain safely and don’t need immediate cash, holding a few weeks to months often gets a better price — check Market Prices for current trends in your district.',
+      lg: 'Emiwendo gitera okuba emitono nnyo bwe buba nga bakungudde kati kubanga kasooli mungi, ne gyeyongera oluvannyuma lw’emyezi. Bw’osobola okuterekawo empeke obulungi era nga tolina bwetaavu bwa nsimbi mangu, okulinda wiiki oba emyezi kitera okukuwa omuwendo omulungi — kebera Emiwendo gy’Akatale okumanya kye kiri mu disitulikiti yo.',
+    },
+  },
+  {
     id: 'faq-greeting',
     keywords: ['hello', 'hi', 'oli otya', 'gyebale', 'wasuze'],
     question: {
