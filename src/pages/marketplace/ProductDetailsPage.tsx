@@ -19,6 +19,7 @@ import { Input } from '@/components/common/Input'
 import { Avatar } from '@/components/common/Avatar'
 import { EmptyState } from '@/components/common/EmptyState'
 import { MOCK_PRODUCTS } from '@/mocks/products'
+import { CATEGORY_IMAGES } from '@/mocks/categoryImages'
 import { PRODUCT_CATEGORY_LABELS } from '@/types/product'
 import { useFavorites } from '@/hooks/useFavorites'
 import { ROUTES } from '@/constants/routes'
@@ -72,11 +73,15 @@ export default function ProductDetailsPage() {
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <Card className="p-0 overflow-hidden">
-            <div
-              className="flex h-56 items-center justify-center text-lg font-bold text-white/90 sm:h-72"
-              style={{ backgroundColor: product.imageColor }}
-            >
-              {PRODUCT_CATEGORY_LABELS[product.category]}
+            <div className="relative flex h-56 items-end sm:h-72" style={{ backgroundColor: product.imageColor }}>
+              <img
+                src={CATEGORY_IMAGES[product.category].full}
+                alt={PRODUCT_CATEGORY_LABELS[product.category]}
+                className="absolute inset-0 size-full object-cover"
+              />
+              <span className="relative m-3 rounded-md bg-black/50 px-3 py-1.5 text-sm font-semibold text-white sm:text-lg">
+                {PRODUCT_CATEGORY_LABELS[product.category]}
+              </span>
             </div>
             <div className="p-5">
               <div className="flex items-start justify-between gap-3">

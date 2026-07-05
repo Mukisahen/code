@@ -57,6 +57,7 @@ export default function MarketplacePage() {
     <DashboardLayout title="Marketplace" subtitle="Buy and sell maize directly, no middlemen">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <Input
+          aria-label="Search by product or district"
           placeholder="Search by product or district..."
           leadingIcon={<Search className="size-4.5" />}
           value={search}
@@ -64,6 +65,7 @@ export default function MarketplacePage() {
           className="sm:max-w-xs"
         />
         <select
+          aria-label="Sort products"
           value={sort}
           onChange={(e) => setSort(e.target.value as SortOption)}
           className="h-12 rounded-md border border-outline-variant bg-surface px-4 text-sm text-on-surface outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 sm:w-56"
@@ -77,6 +79,7 @@ export default function MarketplacePage() {
       <div className="mt-4 flex gap-2 overflow-x-auto pb-1 no-scrollbar">
         <button
           onClick={() => setCategory('all')}
+          aria-pressed={category === 'all'}
           className={cn(
             'shrink-0 rounded-full px-4 py-1.5 text-sm font-semibold transition-colors',
             category === 'all' ? 'bg-primary text-on-primary' : 'bg-surface-variant text-on-surface-variant',
@@ -88,6 +91,7 @@ export default function MarketplacePage() {
           <button
             key={value}
             onClick={() => setCategory(value)}
+            aria-pressed={category === value}
             className={cn(
               'shrink-0 rounded-full px-4 py-1.5 text-sm font-semibold transition-colors',
               category === value ? 'bg-primary text-on-primary' : 'bg-surface-variant text-on-surface-variant',

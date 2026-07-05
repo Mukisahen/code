@@ -10,6 +10,8 @@ import { SectionHeader } from '@/components/common/SectionHeader'
 import { EmptyState } from '@/components/common/EmptyState'
 import { MOCK_STORAGE_BATCHES } from '@/mocks/tasks'
 import { MOCK_PRODUCTS } from '@/mocks/products'
+import { CATEGORY_IMAGES } from '@/mocks/categoryImages'
+import { PRODUCT_CATEGORY_LABELS } from '@/types/product'
 import { MOCK_OFFERS } from '@/mocks/offers'
 import { MOCK_ORDERS } from '@/mocks/orders'
 import type { OfferStatus } from '@/types/selling'
@@ -85,7 +87,11 @@ export default function SellingPage() {
           <div className="space-y-3">
             {activeListings.map((product) => (
               <div key={product.id} className="flex items-center gap-3">
-                <span className="size-10 shrink-0 rounded-lg" style={{ backgroundColor: product.imageColor }} />
+                <img
+                  src={CATEGORY_IMAGES[product.category].sm}
+                  alt={PRODUCT_CATEGORY_LABELS[product.category]}
+                  className="size-10 shrink-0 rounded-lg object-cover"
+                />
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold text-on-surface">{product.title}</p>
                   <p className="text-xs text-on-surface-variant">

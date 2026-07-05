@@ -48,6 +48,8 @@ const FARMER_NAV: NavItem[] = [
   { label: 'AI Assistant', route: ROUTES.aiCropDoctor, icon: Stethoscope },
   { label: 'Market Prices', route: ROUTES.marketPrices, icon: TrendingUp },
   { label: 'Weather', route: ROUTES.weather, icon: CloudSun },
+  { label: 'Reports', route: ROUTES.reports, icon: FileBarChart },
+  { label: 'Analytics', route: ROUTES.analytics, icon: PieChart },
   { label: 'Messages', route: ROUTES.messages, icon: MessageCircle },
   { label: 'Notifications', route: ROUTES.notifications, icon: Bell },
 ]
@@ -59,6 +61,8 @@ const BUYER_NAV: NavItem[] = [
   { label: 'Favourites', route: ROUTES.favorites, icon: Heart },
   { label: 'Order History', route: ROUTES.orderHistory, icon: History },
   { label: 'Market Prices', route: ROUTES.marketPrices, icon: TrendingUp },
+  { label: 'Reports', route: ROUTES.reports, icon: FileBarChart },
+  { label: 'Analytics', route: ROUTES.analytics, icon: PieChart },
   { label: 'Messages', route: ROUTES.messages, icon: MessageCircle },
   { label: 'Notifications', route: ROUTES.notifications, icon: Bell },
 ]

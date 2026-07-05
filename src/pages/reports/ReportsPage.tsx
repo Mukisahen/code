@@ -1,4 +1,4 @@
-import { FileBarChart, Download, Wheat, DollarSign, Package } from 'lucide-react'
+import { FileBarChart, Download, Wheat, DollarSign, Package, ShoppingBag } from 'lucide-react'
 import { DashboardLayout } from '@/layouts/DashboardLayout'
 import { Card } from '@/components/common/Card'
 import { StatTile } from '@/components/common/StatTile'
@@ -6,7 +6,9 @@ import { SectionHeader } from '@/components/common/SectionHeader'
 import { Button } from '@/components/common/Button'
 import { BarChart } from '@/components/charts/BarChart'
 import { MOCK_ORDERS } from '@/mocks/orders'
+import { useAuth } from '@/hooks/useAuth'
 import { formatUGX } from '@/utils/format'
+import type { UserRole } from '@/types/user'
 
 const ORDERS_BY_MONTH = [
   { label: 'Apr', value: 12 },
@@ -15,20 +17,52 @@ const ORDERS_BY_MONTH = [
   { label: 'Jul', value: 15 },
 ]
 
-const REPORTS = [
-  { id: 'rep-1', title: 'Monthly Sales Report', period: 'June 2026', icon: DollarSign },
-  { id: 'rep-2', title: 'Quality & Grading Report', period: 'Q2 2026', icon: Wheat },
-  { id: 'rep-3', title: 'Inventory & Storage Report', period: 'June 2026', icon: Package },
-]
+const REPORTS_BY_ROLE: Record<UserRole, { id: string; title: string; period: string; icon: typeof DollarSign }[]> = {
+  farmer: [
+    { id: 'rep-1', title: 'Monthly Sales Report', period: 'June 2026', icon: DollarSign },
+    { id: 'rep-2', title: 'Harvest & Yield Report', period: 'Q2 2026', icon: Wheat },
+    { id: 'rep-3', title: 'Storage & Quality Report', period: 'June 2026', icon: Package },
+  ],
+  buyer: [
+    { id: 'rep-1', title: 'Monthly Purchases Report', period: 'June 2026', icon: ShoppingBag },
+    { id: 'rep-2', title: 'Spend Summary', period: 'Q2 2026', icon: DollarSign },
+    { id: 'rep-3', title: 'Supplier Performance Report', period: 'June 2026', icon: Wheat },
+  ],
+  processor: [
+    { id: 'rep-1', title: 'Monthly Sales Report', period: 'June 2026', icon: DollarSign },
+    { id: 'rep-2', title: 'Quality & Grading Report', period: 'Q2 2026', icon: Wheat },
+    { id: 'rep-3', title: 'Inventory & Storage Report', period: 'June 2026', icon: Package },
+  ],
+  admin: [
+    { id: 'rep-1', title: 'Platform Revenue Report', period: 'June 2026', icon: DollarSign },
+    { id: 'rep-2', title: 'Quality & Grading Report', period: 'Q2 2026', icon: Wheat },
+    { id: 'rep-3', title: 'Inventory & Storage Report', period: 'June 2026', icon: Package },
+  ],
+}
 
 export default function ReportsPage() {
-  const totalRevenue = MOCK_ORDERS.filter((o) => o.status === 'completed').reduce((sum, o) => sum + o.totalAmount, 0)
+  const { user } = useAuth()
+  const role = user?.role ?? 'farmer'
+  const isBuyer = role === 'buyer'
+  const REPORTS = REPORTS_BY_ROLE[role]
+
+  const totalAmount = MOCK_ORDERS.filter((o) => o.status === 'completed').reduce((sum, o) => sum + o.totalAmount, 0)
+  const ordersCompleted = MOCK_ORDERS.filter((o) => o.status === 'completed').length
 
   return (
-    <DashboardLayout title="Reports" subtitle="Download summaries of your activity on Farm Bhade">
+    <DashboardLayout
+      title="Reports"
+      subtitle={isBuyer ? 'Download summaries of your purchases on Farm Bhade' : 'Download summaries of your activity on Farm Bhade'}
+    >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatTile icon={DollarSign} label="Total revenue" value={formatUGX(totalRevenue)} trend={12.3} tone="primary" />
-        <StatTile icon={Package} label="Orders completed" value={String(MOCK_ORDERS.filter((o) => o.status === 'completed').length)} tone="secondary" />
+        <StatTile
+          icon={DollarSign}
+          label={isBuyer ? 'Total spend' : 'Total revenue'}
+          value={formatUGX(totalAmount)}
+          trend={12.3}
+          tone="primary"
+        />
+        <StatTile icon={Package} label="Orders completed" value={String(ordersCompleted)} tone="secondary" />
         <StatTile icon={FileBarChart} label="Reports available" value={String(REPORTS.length)} tone="tertiary" />
       </div>
 

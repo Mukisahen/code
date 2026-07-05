@@ -13,6 +13,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ label, error, helperText, leadingIcon, id, type, className, ...props }, ref) => {
     const generatedId = useId()
     const inputId = id ?? generatedId
+    const messageId = `${inputId}-message`
     const [showPassword, setShowPassword] = useState(false)
     const isPassword = type === 'password'
     const resolvedType = isPassword ? (showPassword ? 'text' : 'password') : type
@@ -35,6 +36,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             id={inputId}
             type={resolvedType}
             aria-invalid={!!error}
+            aria-describedby={error || helperText ? messageId : undefined}
             className={cn(
               'h-12 w-full rounded-md border bg-surface px-4 text-on-surface outline-none transition-colors placeholder:text-on-surface-variant/70',
               'focus:border-primary focus:ring-2 focus:ring-primary/20',
@@ -51,16 +53,19 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               onClick={() => setShowPassword((v) => !v)}
               className="absolute right-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface"
               aria-label={showPassword ? 'Hide password' : 'Show password'}
-              tabIndex={-1}
             >
               {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
             </button>
           )}
         </div>
         {error ? (
-          <p className="mt-1.5 text-xs font-medium text-error">{error}</p>
+          <p id={messageId} role="alert" className="mt-1.5 text-xs font-medium text-error">
+            {error}
+          </p>
         ) : helperText ? (
-          <p className="mt-1.5 text-xs text-on-surface-variant">{helperText}</p>
+          <p id={messageId} className="mt-1.5 text-xs text-on-surface-variant">
+            {helperText}
+          </p>
         ) : null}
       </div>
     )

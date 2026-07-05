@@ -124,10 +124,12 @@ export default function AiCropDoctorPage() {
 
   return (
     <DashboardLayout title="AI Assistant" subtitle="Diagnose crop problems and get farming advice, in English or Luganda">
-      <div className="mb-5 flex gap-2 rounded-full bg-surface-variant p-1 w-fit">
+      <div role="tablist" className="mb-5 flex gap-2 rounded-full bg-surface-variant p-1 w-fit">
         {(['diagnose', 'ask-ai', 'history'] as Tab[]).map((t) => (
           <button
             key={t}
+            role="tab"
+            aria-selected={tab === t}
             onClick={() => setTab(t)}
             className={cn(
               'flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold transition-colors',

@@ -87,10 +87,12 @@ export default function AdminDashboardPage() {
 
   return (
     <DashboardLayout title="Administrator Dashboard" subtitle="Oversee the entire Farm Bhade ecosystem">
-      <div className="mb-5 flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+      <div role="tablist" className="mb-5 flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
         {TABS.map(({ key, label, icon: Icon }) => (
           <button
             key={key}
+            role="tab"
+            aria-selected={tab === key}
             onClick={() => selectTab(key)}
             className={cn(
               'flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-semibold transition-colors',

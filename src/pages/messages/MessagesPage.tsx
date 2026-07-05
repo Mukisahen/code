@@ -68,6 +68,7 @@ export default function MessagesPage() {
                 <button
                   key={p}
                   onClick={() => setPanel(p)}
+                  aria-pressed={panel === p}
                   className={cn(
                     'rounded-full px-3 py-1.5 text-xs font-semibold capitalize transition-colors',
                     panel === p ? 'bg-surface text-on-surface shadow-elevation-1' : 'text-on-surface-variant',

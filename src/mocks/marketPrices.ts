@@ -11,6 +11,7 @@ export const MOCK_MARKET_PRICES: MarketPriceEntry[] = [
   { id: 'mp-8', district: 'Bugiri', category: 'Maize Flour', pricePerKg: 3150, changePercent: 2.0, updatedAt: '2026-07-04T06:00:00Z' },
   { id: 'mp-9', district: 'Luwero', category: 'Dry Grain', pricePerKg: 1380, changePercent: 0.4, updatedAt: '2026-07-04T06:00:00Z' },
   { id: 'mp-10', district: 'Kiboga', category: 'Wet Maize', pricePerKg: 895, changePercent: -0.6, updatedAt: '2026-07-04T06:00:00Z' },
+  { id: 'mp-11', district: 'Mukono', category: 'Dry Grain', pricePerKg: 1405, changePercent: 1.8, updatedAt: '2026-07-04T06:00:00Z' },
 ]
 
 export const PRICE_TREND_7D = [1180, 1205, 1260, 1300, 1340, 1390, 1420]

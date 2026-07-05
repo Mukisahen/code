@@ -6,6 +6,7 @@ import { Button } from '@/components/common/Button'
 import { Input } from '@/components/common/Input'
 import { EmptyState } from '@/components/common/EmptyState'
 import { MOCK_PRODUCTS } from '@/mocks/products'
+import { CATEGORY_IMAGES } from '@/mocks/categoryImages'
 import { PRODUCT_CATEGORY_LABELS, type Product, type ProductCategory } from '@/types/product'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -115,9 +116,10 @@ export default function MyListingsPage() {
         <div className="space-y-3">
           {listings.map((product) => (
             <Card key={product.id} className="flex items-center gap-4">
-              <span
-                className="hidden size-14 shrink-0 rounded-lg sm:block"
-                style={{ backgroundColor: product.imageColor }}
+              <img
+                src={CATEGORY_IMAGES[product.category].sm}
+                alt={PRODUCT_CATEGORY_LABELS[product.category]}
+                className="hidden size-14 shrink-0 rounded-lg object-cover sm:block"
               />
               <div className="min-w-0 flex-1">
                 <p className="truncate font-semibold text-on-surface">{product.title}</p>

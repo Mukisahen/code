@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { LogOut, Bell, MessageCircle } from 'lucide-react'
 import { ThemeToggle } from '@/components/common/ThemeToggle'
@@ -19,6 +19,10 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ title, subtitle, children, actions }: DashboardLayoutProps) {
   const { user, logout } = useAuth()
   const unreadCount = MOCK_NOTIFICATIONS.filter((n) => !n.read).length
+
+  useEffect(() => {
+    document.title = `${title} · Farm Bhade`
+  }, [title])
 
   if (!user) return null
 

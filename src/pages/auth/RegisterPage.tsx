@@ -79,6 +79,7 @@ export default function RegisterPage() {
                 key={value}
                 type="button"
                 onClick={() => setRole(value)}
+                aria-pressed={role === value}
                 className={cn(
                   'flex flex-col items-center gap-1.5 rounded-md border px-2 py-3 text-xs font-semibold transition-colors',
                   role === value

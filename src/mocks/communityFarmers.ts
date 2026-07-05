@@ -14,4 +14,5 @@ export const MOCK_COMMUNITY_FARMERS: CommunityFarmer[] = [
   { id: 'cf-4', name: 'Byabasaija Emmanuel', initials: 'BE', district: 'Kamwenge', focus: 'Dry grain, irrigation', online: true },
   { id: 'cf-5', name: 'Nabatanzi Joan', initials: 'NJ', district: 'Luwero', focus: 'Maize flour milling', online: false },
   { id: 'cf-6', name: 'Wasswa Ronald', initials: 'WR', district: 'Iganga', focus: 'Dry grain, cooperatives', online: true },
+  { id: 'cf-7', name: 'Nalubega Sarah', initials: 'NS', district: 'Mukono', focus: 'Wet maize, quick drying', online: true },
 ]

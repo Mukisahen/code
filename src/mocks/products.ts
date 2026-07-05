@@ -61,6 +61,18 @@ const sellers: Seller[] = [
     avatarInitials: 'OD',
     memberSince: '2025-02-14',
   },
+  {
+    id: 'sel-6',
+    name: 'Ssali Ronald',
+    role: 'farmer',
+    district: 'Mukono',
+    rating: 4.7,
+    totalSales: 41,
+    verified: true,
+    phone: '+256702334455',
+    avatarInitials: 'SR',
+    memberSince: '2024-03-22',
+  },
 ]
 
 export const MOCK_PRODUCTS: Product[] = [
@@ -170,5 +182,19 @@ export const MOCK_PRODUCTS: Product[] = [
     seller: sellers[4],
     imageColor: '#E0C070',
     postedAt: '2026-06-29T13:15:00Z',
+  },
+  {
+    id: 'prod-9',
+    title: 'Wet Maize — Fresh from Mukono',
+    category: 'wet-maize',
+    pricePerUnit: 950,
+    unit: 'kg',
+    quantityAvailable: 2500,
+    district: 'Mukono',
+    description: 'Freshly harvested wet maize from Lake Victoria basin farms, ideal for quick drying or processing.',
+    seller: sellers[5],
+    imageColor: '#C7D96B',
+    postedAt: '2026-07-04T09:00:00Z',
+    featured: true,
   },
 ]

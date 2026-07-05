@@ -248,7 +248,7 @@ export function AppRoutes() {
         <Route
           path={ROUTES.reports}
           element={
-            <ProtectedRoute allowedRoles={['processor', 'admin']}>
+            <ProtectedRoute allowedRoles={['farmer', 'buyer', 'processor', 'admin']}>
               <ReportsPage />
             </ProtectedRoute>
           }
@@ -256,7 +256,7 @@ export function AppRoutes() {
         <Route
           path={ROUTES.analytics}
           element={
-            <ProtectedRoute allowedRoles={['processor', 'admin']}>
+            <ProtectedRoute allowedRoles={['farmer', 'buyer', 'processor', 'admin']}>
               <AnalyticsPage />
             </ProtectedRoute>
           }

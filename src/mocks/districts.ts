@@ -8,6 +8,7 @@ export const UGANDA_MAIZE_DISTRICTS = [
   'Kiboga',
   'Luwero',
   'Kayunga',
+  'Mukono',
   'Jinja',
   'Mbale',
   'Ntungamo',

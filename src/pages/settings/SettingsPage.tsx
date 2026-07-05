@@ -38,6 +38,7 @@ export default function SettingsPage() {
               <button
                 key={m}
                 onClick={() => setMode(m)}
+                aria-pressed={mode === m}
                 className={cn(
                   'flex flex-1 items-center justify-center gap-2 rounded-md border py-3 text-sm font-semibold capitalize transition-colors',
                   mode === m ? 'border-primary bg-primary-container text-on-primary-container' : 'border-outline-variant text-on-surface-variant',
@@ -55,6 +56,7 @@ export default function SettingsPage() {
             <Globe className="size-4.5" /> Language
           </h2>
           <select
+            aria-label="Language"
             value={language}
             onChange={(e) => setLanguage(e.target.value)}
             className="h-12 w-full rounded-md border border-outline-variant bg-surface px-4 text-on-surface outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"

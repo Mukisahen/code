@@ -21,6 +21,7 @@ export function Sidebar({ role }: { role: UserRole }) {
             <Link
               key={label}
               to={route}
+              aria-current={active ? 'page' : undefined}
               className={cn(
                 'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold transition-colors',
                 active

@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { Logo } from '@/components/common/Logo'
 import { ThemeToggle } from '@/components/common/ThemeToggle'
@@ -13,6 +13,10 @@ interface AuthLayoutProps {
 }
 
 export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
+  useEffect(() => {
+    document.title = `${title} · Farm Bhade`
+  }, [title])
+
   return (
     <div className="min-h-dvh bg-surface-variant/40 lg:grid lg:grid-cols-2">
       <div className="relative hidden lg:block">

@@ -59,6 +59,20 @@ The app serves four roles, each with its own dashboard: **Farmer**, **Buyer**,
 `src/assets/images/farmer-hero.jpg` (and its `-sm` variant) is a licensed Adobe
 Stock photo (asset ID `329042654`), used under a standard Adobe Stock license.
 
+The marketplace product-category photos in `src/assets/images/product-*.jpg`
+are also licensed Adobe Stock photos, used under a standard Adobe Stock
+license:
+
+| Category      | Asset ID    |
+| ------------- | ----------- |
+| Green Maize   | `369466613` |
+| Wet Maize     | `449622554` |
+| Dry Grain     | `221839682` |
+| Dry Cobs      | `535069476` |
+| Roasted Maize | `226332145` |
+| Maize Flour   | `345117803` |
+| Seed Maize    | `316566729` |
+
 ## Status
 
 Built module by module. Current modules: folder structure & scaffold, theme

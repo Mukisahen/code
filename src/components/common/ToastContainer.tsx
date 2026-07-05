@@ -18,7 +18,11 @@ export function ToastContainer() {
   if (toasts.length === 0) return null
 
   return (
-    <div className="fixed inset-x-4 top-4 z-50 flex flex-col gap-2 safe-top sm:inset-x-auto sm:right-4 sm:w-96">
+    <div
+      role="status"
+      aria-live="polite"
+      className="fixed inset-x-4 top-4 z-50 flex flex-col gap-2 safe-top sm:inset-x-auto sm:right-4 sm:w-96"
+    >
       {toasts.map((t) => {
         const Icon = TYPE_ICON[t.type]
         return (
