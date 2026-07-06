@@ -1,0 +1,358 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  farmer
+  buyer
+  processor
+  admin
+}
+
+enum SubscriptionTier {
+  free
+  premium
+}
+
+enum UserStatus {
+  active
+  suspended
+  pending
+}
+
+enum ProductCategory {
+  green_maize
+  wet_maize
+  dry_grain
+  dry_cobs
+  roasted_maize
+  maize_flour
+  seed_maize
+}
+
+enum ProductUnit {
+  kg
+  bag_100kg
+  bag_50kg
+  cob
+}
+
+enum OrderStatus {
+  pending
+  confirmed
+  in_transit
+  completed
+  cancelled
+}
+
+enum BuyerRequestStatus {
+  open
+  negotiating
+  fulfilled
+  closed
+}
+
+enum OfferStatus {
+  pending
+  accepted
+  declined
+}
+
+enum DiagnosisSeverity {
+  healthy
+  low
+  moderate
+  severe
+}
+
+enum NotificationType {
+  order
+  price
+  weather
+  crop_doctor
+  system
+  message
+}
+
+enum ConversationType {
+  direct
+  community
+}
+
+enum VerificationStatus {
+  pending
+  approved
+  rejected
+}
+
+enum TicketPriority {
+  low
+  medium
+  high
+}
+
+enum TicketStatus {
+  open
+  in_progress
+  resolved
+}
+
+model User {
+  id               String            @id @default(cuid())
+  fullName         String
+  phone            String            @unique
+  passwordHash     String
+  email            String?
+  role             UserRole
+  district         String
+  avatarUrl        String?
+  subscriptionTier SubscriptionTier  @default(free)
+  verified         Boolean           @default(false)
+  status           UserStatus        @default(active)
+  rating           Float             @default(0)
+  totalSales       Int               @default(0)
+  lastSeenAt       DateTime?
+  createdAt        DateTime          @default(now())
+
+  products          Product[]
+  ordersAsBuyer     Order[]           @relation("OrdersAsBuyer")
+  ordersAsSeller    Order[]           @relation("OrdersAsSeller")
+  buyerRequests     BuyerRequest[]
+  offers            ProductOffer[]
+  favorites         Favorite[]
+  diagnoses         CropDiagnosis[]
+  messages          Message[]
+  conversations     ConversationParticipant[]
+  notifications     Notification[]
+  verificationReq   VerificationRequest[]    @relation("VerificationApplicant")
+  reviewedVerifications VerificationRequest[] @relation("VerificationReviewer")
+  auditLogs         AuditLogEntry[]
+  tickets           SupportTicket[]
+  subscription      Subscription?
+  marketPriceEdits  MarketPriceEntry[]
+}
+
+model Product {
+  id                String          @id @default(cuid())
+  title             String
+  category          ProductCategory
+  pricePerUnit      Int
+  unit              ProductUnit
+  quantityAvailable Int
+  district          String
+  description       String
+  imageUrl          String?
+  featured          Boolean         @default(false)
+  postedAt          DateTime        @default(now())
+
+  sellerId String
+  seller   User   @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+  orders    Order[]
+  offers    ProductOffer[]
+  favorites Favorite[]
+}
+
+model Order {
+  id               String      @id @default(cuid())
+  productTitle     String
+  category         String
+  quantityAmount   Float
+  quantityUnit     String
+  totalAmount      Int
+  status           OrderStatus @default(pending)
+  createdAt        DateTime    @default(now())
+
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  buyerId String
+  buyer   User   @relation("OrdersAsBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+
+  sellerId String
+  seller   User   @relation("OrdersAsSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+}
+
+model BuyerRequest {
+  id             String             @id @default(cuid())
+  district       String
+  category       String
+  quantityNeeded String
+  targetPrice    Int
+  notes          String
+  status         BuyerRequestStatus @default(open)
+  postedAt       DateTime           @default(now())
+
+  buyerId String
+  buyer   User   @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+}
+
+model ProductOffer {
+  id           String      @id @default(cuid())
+  offerAmount  Int
+  unit         String
+  quantity     String
+  status       OfferStatus @default(pending)
+  createdAt    DateTime    @default(now())
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  buyerId String
+  buyer   User   @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+}
+
+model CropDiagnosis {
+  id              String            @id @default(cuid())
+  imageUrl        String
+  isCropPhoto     Boolean
+  condition       String?
+  severity        DiagnosisSeverity?
+  confidence      Int?
+  summary         String?
+  recommendations String[]
+  createdAt       DateTime          @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Conversation {
+  id               String            @id @default(cuid())
+  type             ConversationType  @default(direct)
+  productContext   String?
+  lastMessageAt    DateTime          @default(now())
+
+  participants ConversationParticipant[]
+  messages     Message[]
+}
+
+model ConversationParticipant {
+  id             String       @id @default(cuid())
+  unreadCount    Int          @default(0)
+
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  text           String
+  sentAt         DateTime     @default(now())
+
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  senderId String
+  sender   User   @relation(fields: [senderId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id          String           @id @default(cuid())
+  type        NotificationType
+  title       String
+  description String
+  read        Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model MarketPriceEntry {
+  id            String   @id @default(cuid())
+  district      String
+  category      String
+  pricePerKg    Int
+  changePercent Float
+  updatedAt     DateTime @default(now())
+
+  updatedById String?
+  updatedBy   User?   @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@unique([district, category])
+}
+
+model MarketPriceHistory {
+  id         String   @id @default(cuid())
+  district   String
+  category   String
+  pricePerKg Int
+  recordedAt DateTime @default(now())
+
+  @@index([district, category, recordedAt])
+}
+
+model WeatherCache {
+  district  String   @id
+  payload   Json
+  fetchedAt DateTime @default(now())
+}
+
+model VerificationRequest {
+  id            String              @id @default(cuid())
+  documentType  String
+  submittedAt   DateTime            @default(now())
+  status        VerificationStatus  @default(pending)
+  reviewedAt    DateTime?
+
+  applicantId String
+  applicant   User   @relation("VerificationApplicant", fields: [applicantId], references: [id], onDelete: Cascade)
+
+  reviewerId String?
+  reviewer   User?   @relation("VerificationReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
+}
+
+model AuditLogEntry {
+  id        String   @id @default(cuid())
+  action    String
+  target    String
+  timestamp DateTime @default(now())
+
+  actorId String
+  actor   User   @relation(fields: [actorId], references: [id], onDelete: Cascade)
+}
+
+model SupportTicket {
+  id        String         @id @default(cuid())
+  subject   String
+  priority  TicketPriority @default(medium)
+  status    TicketStatus   @default(open)
+  createdAt DateTime       @default(now())
+
+  requesterId String
+  requester   User   @relation(fields: [requesterId], references: [id], onDelete: Cascade)
+}
+
+model Subscription {
+  id        String           @id @default(cuid())
+  tier      SubscriptionTier @default(free)
+  renewsAt  DateTime
+  amount    Int
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
