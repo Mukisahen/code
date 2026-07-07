@@ -85,6 +85,18 @@ All endpoints are under `/api`. Authenticated endpoints expect `Authorization: B
 - `GET /districts`
 - `GET/PATCH /admin/*` (users, listings, verifications, tickets, audit-logs,
   subscriptions, system-health, analytics, overview, assistant) — admin role only
+- `POST /admin/admins/:userId` (promote to admin), `DELETE /admin/admins/:userId`
+  (revoke admin) — supreme admin only
+
+## Admin hierarchy
+
+Admin accounts can never be created through public registration — the `role`
+field there only accepts `farmer` / `buyer` / `processor`. The seed script
+creates one **supreme admin** (`+256700000001`, `isSuperAdmin: true`), who is
+the only account that can promote another user to `admin` or revoke an
+existing admin's access. Admins promoted this way get every other admin
+capability but not `isSuperAdmin`, so they cannot manage other admins or act
+on the supreme admin's account (change its status, suspend it, revoke it).
 
 ## Known limitations (pilot scope)
 

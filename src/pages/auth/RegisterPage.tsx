@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { User, Phone, Lock, MapPin, Sprout, ShoppingCart, Factory, ShieldCheck } from 'lucide-react'
+import { User, Phone, Lock, MapPin, Sprout, ShoppingCart, Factory } from 'lucide-react'
 import { AuthLayout } from '@/layouts/AuthLayout'
 import { Input } from '@/components/common/Input'
 import { Button } from '@/components/common/Button'
@@ -13,11 +13,12 @@ import type { UserRole } from '@/types/user'
 import { cn } from '@/utils/cn'
 import { validateFullName, validatePhone, validatePassword, validateConfirmPassword } from '@/utils/validation'
 
-const ROLE_OPTIONS: { value: UserRole; label: string; icon: typeof Sprout }[] = [
+// Admin is never a self-service registration option — accounts are promoted
+// by an existing super admin from the Administrator Dashboard instead.
+const ROLE_OPTIONS: { value: Exclude<UserRole, 'admin'>; label: string; icon: typeof Sprout }[] = [
   { value: 'farmer', label: 'Farmer', icon: Sprout },
   { value: 'buyer', label: 'Buyer', icon: ShoppingCart },
   { value: 'processor', label: 'Processor', icon: Factory },
-  { value: 'admin', label: 'Admin', icon: ShieldCheck },
 ]
 
 interface FieldErrors {

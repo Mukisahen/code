@@ -109,6 +109,7 @@ model User {
   passwordHash     String
   email            String?
   role             UserRole
+  isSuperAdmin     Boolean           @default(false)
   district         String
   avatarUrl        String?
   subscriptionTier SubscriptionTier  @default(free)

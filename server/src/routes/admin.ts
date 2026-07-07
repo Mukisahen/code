@@ -2,10 +2,10 @@ import { Router } from 'express'
 import { z } from 'zod'
 import { prisma } from '../lib/prisma.js'
 import { asyncHandler } from '../middleware/asyncHandler.js'
-import { requireAuth, requireRole } from '../middleware/auth.js'
+import { requireAuth, requireRole, requireSuperAdmin } from '../middleware/auth.js'
 import { writeAuditLog } from '../lib/auditLog.js'
 import { askAdminAssistant } from '../services/adminAssistant.js'
-import { notFound } from '../lib/httpError.js'
+import { notFound, forbidden, badRequest } from '../lib/httpError.js'
 
 export const adminRouter = Router()
 
@@ -51,6 +51,7 @@ adminRouter.get(
         id: u.id,
         fullName: u.fullName,
         role: u.role,
+        isSuperAdmin: u.isSuperAdmin,
         district: u.district,
         status: u.status,
         joinedAt: u.createdAt.toISOString(),
@@ -67,11 +68,50 @@ adminRouter.patch(
     const { status } = statusSchema.parse(req.body)
     const target = await prisma.user.findUnique({ where: { id: req.params.id } })
     if (!target) throw notFound('User not found')
+    if (target.isSuperAdmin && !req.user!.isSuperAdmin) throw forbidden('Only a super admin can act on a super admin')
 
     const user = await prisma.user.update({ where: { id: req.params.id }, data: { status } })
     await writeAuditLog(req.user!.id, `Set user status to ${status}`, user.fullName)
 
     res.json({ user: { id: user.id, status: user.status } })
+  }),
+)
+
+// ---- Admin management (supreme admin only) ----
+adminRouter.post(
+  '/admins/:userId',
+  requireSuperAdmin,
+  asyncHandler(async (req, res) => {
+    const target = await prisma.user.findUnique({ where: { id: req.params.userId } })
+    if (!target) throw notFound('User not found')
+    if (target.role === 'admin') throw badRequest('User is already an admin')
+
+    const user = await prisma.user.update({
+      where: { id: req.params.userId },
+      data: { role: 'admin', isSuperAdmin: false },
+    })
+    await writeAuditLog(req.user!.id, 'Promoted to admin', user.fullName)
+
+    res.json({ user: { id: user.id, role: user.role, isSuperAdmin: user.isSuperAdmin } })
+  }),
+)
+
+adminRouter.delete(
+  '/admins/:userId',
+  requireSuperAdmin,
+  asyncHandler(async (req, res) => {
+    const target = await prisma.user.findUnique({ where: { id: req.params.userId } })
+    if (!target) throw notFound('User not found')
+    if (target.role !== 'admin') throw badRequest('User is not an admin')
+    if (target.isSuperAdmin) throw forbidden('The supreme admin cannot be demoted')
+
+    const user = await prisma.user.update({
+      where: { id: req.params.userId },
+      data: { role: 'farmer' },
+    })
+    await writeAuditLog(req.user!.id, 'Revoked admin access', user.fullName)
+
+    res.json({ user: { id: user.id, role: user.role } })
   }),
 )
 

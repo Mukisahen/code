@@ -16,6 +16,7 @@ export function toPublicUser(user: User) {
     phone: user.phone,
     email: user.email ?? undefined,
     role: user.role,
+    isSuperAdmin: user.isSuperAdmin,
     district: user.district,
     avatarUrl: user.avatarUrl ?? undefined,
     subscriptionTier: user.subscriptionTier,

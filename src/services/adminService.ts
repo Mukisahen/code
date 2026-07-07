@@ -34,6 +34,14 @@ export async function updateUserStatus(id: string, status: AdminUserRow['status'
   await api.patch(`/admin/users/${id}/status`, { status })
 }
 
+export async function promoteToAdmin(id: string): Promise<void> {
+  await api.post(`/admin/admins/${id}`)
+}
+
+export async function revokeAdmin(id: string): Promise<void> {
+  await api.delete(`/admin/admins/${id}`)
+}
+
 export interface AdminListing {
   id: string
   title: string

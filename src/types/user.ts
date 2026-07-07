@@ -6,6 +6,7 @@ export interface User {
   phone: string
   email?: string
   role: UserRole
+  isSuperAdmin?: boolean
   district: string
   avatarUrl?: string
   subscriptionTier: 'free' | 'premium'

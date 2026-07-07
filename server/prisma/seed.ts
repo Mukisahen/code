@@ -58,10 +58,11 @@ async function main() {
         phone: '+256700000001',
         passwordHash,
         role: 'admin',
+        isSuperAdmin: true,
         district: 'Kampala',
         verified: true,
       },
-      update: {},
+      update: { isSuperAdmin: true },
     }),
   ])
 

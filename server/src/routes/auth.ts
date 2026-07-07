@@ -10,11 +10,13 @@ import { badRequest, conflict, notFound, unauthorized } from '../lib/httpError.j
 
 export const authRouter = Router()
 
+// Admin accounts are never self-registered — only the seeded supreme admin
+// or an existing super admin (via POST /admin/admins) can grant admin access.
 const registerSchema = z.object({
   fullName: z.string().min(2),
   phone: z.string().min(9),
   password: z.string().min(8),
-  role: z.enum(['farmer', 'buyer', 'processor', 'admin']),
+  role: z.enum(['farmer', 'buyer', 'processor']),
   district: z.string().min(2),
 })
 

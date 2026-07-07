@@ -4,6 +4,7 @@ export interface AdminUserRow {
   id: string
   fullName: string
   role: UserRole
+  isSuperAdmin: boolean
   district: string
   status: 'active' | 'suspended' | 'pending'
   joinedAt: string

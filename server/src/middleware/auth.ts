@@ -44,3 +44,12 @@ export function requireRole(...roles: UserRole[]) {
     next()
   }
 }
+
+// Gates admin-management actions (promoting/revoking other admins, acting on
+// another admin's account) that only the supreme admin may perform — regular
+// admins have every other requireRole('admin') capability but not this one.
+export function requireSuperAdmin(req: Request, _res: Response, next: NextFunction) {
+  if (!req.user) return next(unauthorized())
+  if (req.user.role !== 'admin' || !req.user.isSuperAdmin) return next(forbidden('Super admin only'))
+  next()
+}

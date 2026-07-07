@@ -16,6 +16,7 @@ import {
   CheckCircle2,
 } from 'lucide-react'
 import { DashboardLayout } from '@/layouts/DashboardLayout'
+import { useAuth } from '@/hooks/useAuth'
 import { Card } from '@/components/common/Card'
 import { StatTile } from '@/components/common/StatTile'
 import { SectionHeader } from '@/components/common/SectionHeader'
@@ -62,6 +63,8 @@ const TICKET_STATUS_TONE = { open: 'error', 'in-progress': 'warning', resolved: 
 export default function AdminDashboardPage() {
   const location = useLocation()
   const navigate = useNavigate()
+  const { user: currentUser } = useAuth()
+  const isSuperAdmin = !!currentUser?.isSuperAdmin
   const [tab, setTab] = useState<Tab>('overview')
 
   const [overview, setOverview] = useState<AdminOverview | null>(null)
@@ -104,6 +107,16 @@ export default function AdminDashboardPage() {
     const nextStatus = current === 'suspended' ? 'active' : 'suspended'
     setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, status: nextStatus } : u)))
     await adminService.updateUserStatus(id, nextStatus)
+  }
+
+  async function promoteToAdmin(id: string) {
+    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, role: 'admin' } : u)))
+    await adminService.promoteToAdmin(id)
+  }
+
+  async function revokeAdmin(id: string) {
+    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, role: 'farmer' } : u)))
+    await adminService.revokeAdmin(id)
   }
 
   async function decideVerification(id: string, status: 'approved' | 'rejected') {
@@ -184,20 +197,41 @@ export default function AdminDashboardPage() {
                 <tbody>
                   {users.map((u) => (
                     <tr key={u.id} className="border-b border-outline-variant/40 last:border-0">
-                      <td className="px-4 py-3 font-medium text-on-surface">{u.fullName}</td>
+                      <td className="px-4 py-3 font-medium text-on-surface">
+                        {u.fullName}
+                        {u.isSuperAdmin && (
+                          <Badge tone="primary" className="ml-2">
+                            Supreme Admin
+                          </Badge>
+                        )}
+                      </td>
                       <td className="px-4 py-3 capitalize text-on-surface-variant">{u.role}</td>
                       <td className="px-4 py-3 text-on-surface-variant">{u.district}</td>
                       <td className="px-4 py-3">
                         <Badge tone={STATUS_TONE[u.status]}>{u.status}</Badge>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <Button
-                          size="sm"
-                          variant={u.status === 'suspended' ? 'tonal' : 'outlined'}
-                          onClick={() => toggleUserStatus(u.id, u.status)}
-                        >
-                          {u.status === 'suspended' ? 'Reactivate' : 'Suspend'}
-                        </Button>
+                        <div className="flex justify-end gap-2">
+                          {isSuperAdmin && u.role !== 'admin' && (
+                            <Button size="sm" variant="outlined" onClick={() => promoteToAdmin(u.id)}>
+                              Make admin
+                            </Button>
+                          )}
+                          {isSuperAdmin && u.role === 'admin' && !u.isSuperAdmin && (
+                            <Button size="sm" variant="outlined" onClick={() => revokeAdmin(u.id)}>
+                              Revoke admin
+                            </Button>
+                          )}
+                          {(!u.isSuperAdmin || isSuperAdmin) && (
+                            <Button
+                              size="sm"
+                              variant={u.status === 'suspended' ? 'tonal' : 'outlined'}
+                              onClick={() => toggleUserStatus(u.id, u.status)}
+                            >
+                              {u.status === 'suspended' ? 'Reactivate' : 'Suspend'}
+                            </Button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
