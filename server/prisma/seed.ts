@@ -5,6 +5,15 @@ const prisma = new PrismaClient()
 
 const DEMO_PASSWORD = 'Password123'
 
+if (process.env.NODE_ENV === 'production') {
+  console.error(
+    'Refusing to run the demo seed against a production database — every account it ' +
+      'creates (including the admin) shares the public password "Password123". ' +
+      'Use `npm run create-admin` instead to bootstrap the real supreme admin.',
+  )
+  process.exit(1)
+}
+
 async function main() {
   const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10)
 

@@ -1,5 +1,6 @@
 import express from 'express'
 import cors from 'cors'
+import helmet from 'helmet'
 import path from 'node:path'
 import { env } from './env.js'
 import { errorHandler } from './middleware/errorHandler.js'
@@ -21,6 +22,13 @@ import { adminRouter } from './routes/admin.js'
 export function createApp() {
   const app = express()
 
+  // Behind the Caddy reverse proxy in production, so req.ip reflects the real
+  // client (needed for the auth rate limiter) instead of the proxy's address.
+  app.set('trust proxy', 1)
+
+  // contentSecurityPolicy/CORP are tuned off: this is a JSON API plus a public
+  // /uploads image host consumed by a separate frontend origin, not an HTML app.
+  app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: { policy: 'cross-origin' } }))
   app.use(cors({ origin: env.corsOrigin }))
   app.use(express.json())
   app.use('/uploads', express.static(path.resolve(env.uploadsDir)))

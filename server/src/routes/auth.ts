@@ -6,6 +6,7 @@ import { signAuthToken } from '../lib/jwt.js'
 import { toPublicUser } from '../lib/serialize.js'
 import { asyncHandler } from '../middleware/asyncHandler.js'
 import { requireAuth } from '../middleware/auth.js'
+import { authRateLimit } from '../middleware/rateLimit.js'
 import { badRequest, conflict, notFound, unauthorized } from '../lib/httpError.js'
 
 export const authRouter = Router()
@@ -22,6 +23,7 @@ const registerSchema = z.object({
 
 authRouter.post(
   '/register',
+  authRateLimit,
   asyncHandler(async (req, res) => {
     const payload = registerSchema.parse(req.body)
 
@@ -51,6 +53,7 @@ const loginSchema = z.object({
 
 authRouter.post(
   '/login',
+  authRateLimit,
   asyncHandler(async (req, res) => {
     const { phone, password } = loginSchema.parse(req.body)
 
@@ -71,6 +74,7 @@ const resetSchema = z.object({ phone: z.string().min(9) })
 
 authRouter.post(
   '/password-reset',
+  authRateLimit,
   asyncHandler(async (req, res) => {
     const { phone } = resetSchema.parse(req.body)
     const user = await prisma.user.findUnique({ where: { phone } })

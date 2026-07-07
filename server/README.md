@@ -49,21 +49,44 @@ and [Caddy](https://caddyserver.com) as a reverse proxy with automatic HTTPS.
 3. Create a `.env` file in `server/` with:
    ```
    POSTGRES_PASSWORD=<a strong random password>
-   JWT_SECRET=<a long random string>
+   JWT_SECRET=<at least 32 random characters — `openssl rand -base64 48`>
    API_DOMAIN=api.yourdomain.com   # omit to just use the server's IP over HTTP on localhost
-   CORS_ORIGIN=https://yourdomain.com
+   CORS_ORIGIN=https://yourdomain.com   # required — the app refuses to boot with "*" in production
    PUBLIC_UPLOADS_BASE_URL=https://api.yourdomain.com/uploads
    ```
 4. Run:
    ```bash
    docker compose up -d --build
-   docker compose exec api npm run seed   # first deploy only
    ```
-5. Caddy automatically requests a Let's Encrypt certificate for `API_DOMAIN` and proxies
+5. Bootstrap the one real supreme admin — **do not run `npm run seed` against this
+   database**, it creates every demo account (including an admin) with the public
+   password `Password123` and the app refuses to run it when `NODE_ENV=production`:
+   ```bash
+   docker compose exec \
+     -e SUPER_ADMIN_PHONE=+2567XXXXXXXX \
+     -e SUPER_ADMIN_PASSWORD='<a long random password, at least 12 chars>' \
+     -e SUPER_ADMIN_NAME='Your Name' \
+     api npm run create-admin
+   ```
+6. Caddy automatically requests a Let's Encrypt certificate for `API_DOMAIN` and proxies
    HTTPS traffic to the API container. Database migrations run automatically on container
    start (`prisma migrate deploy`).
 
 To ship a code update: `git pull && docker compose up -d --build`.
+
+### Production hardening already in place
+
+- `NODE_ENV=production` is baked into the API image; on boot the app refuses to start
+  if `JWT_SECRET` is under 32 characters or `CORS_ORIGIN` is left as `*`.
+- `helmet` sets standard security headers; `express-rate-limit` caps `/auth/register`,
+  `/auth/login`, and `/auth/password-reset` at 20 requests per 15 minutes per IP.
+  `app.set('trust proxy', 1)` makes that limiter see the real client IP through Caddy.
+- The API container has a Docker healthcheck against `GET /health`, and the process
+  shuts down gracefully on `SIGTERM`/`SIGINT` (closes the HTTP server, then disconnects
+  Prisma) so `docker compose restart`/redeploys don't drop in-flight requests abruptly.
+- Demo seed data (`npm run seed`) is blocked outright when `NODE_ENV=production`; the
+  only supported way to create an admin in production is `npm run create-admin`
+  (above), which creates exactly one supreme admin from env vars you choose yourself.
 
 ## API surface
 
