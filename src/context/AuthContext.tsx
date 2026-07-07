@@ -1,8 +1,7 @@
 import { createContext, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import * as authService from '@/services/authService'
+import { getToken, setToken } from '@/lib/apiClient'
 import type { AuthCredentials, RegisterPayload, User } from '@/types/user'
-
-const STORAGE_KEY = 'farm-bhade-user'
 
 interface AuthContextValue {
   user: User | null
@@ -20,45 +19,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isInitializing, setIsInitializing] = useState(true)
 
   useEffect(() => {
-    const stored = window.localStorage.getItem(STORAGE_KEY)
-    if (stored) {
+    let cancelled = false
+
+    async function rehydrate() {
+      if (!getToken()) {
+        setIsInitializing(false)
+        return
+      }
       try {
-        setUser(JSON.parse(stored) as User)
+        const current = await authService.fetchCurrentUser()
+        if (!cancelled) setUser(current)
       } catch {
-        window.localStorage.removeItem(STORAGE_KEY)
+        setToken(null)
+      } finally {
+        if (!cancelled) setIsInitializing(false)
       }
     }
-    setIsInitializing(false)
-  }, [])
 
-  const persist = useCallback((next: User | null) => {
-    setUser(next)
-    if (next) {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
-    } else {
-      window.localStorage.removeItem(STORAGE_KEY)
+    rehydrate()
+    return () => {
+      cancelled = true
     }
   }, [])
 
-  const login = useCallback(
-    async (credentials: AuthCredentials) => {
-      const loggedInUser = await authService.login(credentials)
-      persist(loggedInUser)
-      return loggedInUser
-    },
-    [persist],
-  )
+  const login = useCallback(async (credentials: AuthCredentials) => {
+    const loggedInUser = await authService.login(credentials)
+    setUser(loggedInUser)
+    return loggedInUser
+  }, [])
 
-  const register = useCallback(
-    async (payload: RegisterPayload) => {
-      const newUser = await authService.register(payload)
-      persist(newUser)
-      return newUser
-    },
-    [persist],
-  )
+  const register = useCallback(async (payload: RegisterPayload) => {
+    const newUser = await authService.register(payload)
+    setUser(newUser)
+    return newUser
+  }, [])
 
-  const logout = useCallback(() => persist(null), [persist])
+  const logout = useCallback(() => {
+    setToken(null)
+    setUser(null)
+  }, [])
 
   const value = useMemo(
     () => ({ user, isAuthenticated: !!user, isInitializing, login, register, logout }),

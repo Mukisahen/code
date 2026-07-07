@@ -1,11 +1,12 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { PlusCircle, Pencil, Trash2, Store } from 'lucide-react'
 import { DashboardLayout } from '@/layouts/DashboardLayout'
 import { Card } from '@/components/common/Card'
 import { Button } from '@/components/common/Button'
 import { Input } from '@/components/common/Input'
 import { EmptyState } from '@/components/common/EmptyState'
-import { MOCK_PRODUCTS } from '@/mocks/products'
+import { InlineSpinner } from '@/components/common/InlineSpinner'
+import * as marketplaceService from '@/services/marketplaceService'
 import { CATEGORY_IMAGES } from '@/mocks/categoryImages'
 import { PRODUCT_CATEGORY_LABELS, type Product, type ProductCategory } from '@/types/product'
 import { useAuth } from '@/hooks/useAuth'
@@ -14,50 +15,55 @@ const CATEGORY_OPTIONS = Object.entries(PRODUCT_CATEGORY_LABELS) as [ProductCate
 
 export default function MyListingsPage() {
   const { user } = useAuth()
-  const [listings, setListings] = useState<Product[]>(MOCK_PRODUCTS.slice(0, 3))
+  const [listings, setListings] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
   const [isAdding, setIsAdding] = useState(false)
   const [title, setTitle] = useState('')
   const [category, setCategory] = useState<ProductCategory>('dry-grain')
   const [price, setPrice] = useState('')
   const [quantity, setQuantity] = useState('')
+  const [formError, setFormError] = useState<string | null>(null)
 
-  function handleAdd(event: FormEvent) {
+  useEffect(() => {
+    marketplaceService
+      .getMyProducts()
+      .then(setListings)
+      .finally(() => setLoading(false))
+  }, [])
+
+  async function handleAdd(event: FormEvent) {
     event.preventDefault()
     if (!title.trim() || !price.trim() || !quantity.trim() || !user) return
-    const newProduct: Product = {
-      id: `prod-${Date.now()}`,
-      title,
-      category,
-      pricePerUnit: Number(price),
-      unit: 'kg',
-      quantityAvailable: Number(quantity),
-      district: user.district,
-      description: 'Newly added listing.',
-      seller: {
-        id: user.id,
-        name: user.fullName,
-        role: user.role === 'farmer' || user.role === 'processor' ? user.role : 'farmer',
+    setFormError(null)
+
+    try {
+      const created = await marketplaceService.createProduct({
+        title,
+        category,
+        pricePerUnit: Number(price),
+        unit: 'kg',
+        quantityAvailable: Number(quantity),
         district: user.district,
-        rating: 5,
-        totalSales: 0,
-        verified: user.verified,
-        phone: user.phone,
-        avatarInitials: user.fullName
-          .split(' ')
-          .map((p) => p[0])
-          .join('')
-          .slice(0, 2)
-          .toUpperCase(),
-        memberSince: user.createdAt,
-      },
-      imageColor: '#4C9A54',
-      postedAt: new Date().toISOString(),
+        description: 'Newly added listing.',
+      })
+      setListings((prev) => [created, ...prev])
+      setTitle('')
+      setPrice('')
+      setQuantity('')
+      setIsAdding(false)
+    } catch {
+      setFormError('Could not publish listing. Please try again.')
     }
-    setListings((prev) => [newProduct, ...prev])
-    setTitle('')
-    setPrice('')
-    setQuantity('')
-    setIsAdding(false)
+  }
+
+  async function handleDelete(id: string) {
+    const previous = listings
+    setListings((prev) => prev.filter((p) => p.id !== id))
+    try {
+      await marketplaceService.deleteProduct(id)
+    } catch {
+      setListings(previous)
+    }
   }
 
   return (
@@ -99,6 +105,7 @@ export default function MyListingsPage() {
               onChange={(e) => setQuantity(e.target.value)}
               required
             />
+            {formError && <p className="text-xs font-medium text-error sm:col-span-2">{formError}</p>}
             <Button type="submit" className="sm:col-span-2">
               Publish listing
             </Button>
@@ -106,7 +113,9 @@ export default function MyListingsPage() {
         </Card>
       )}
 
-      {listings.length === 0 ? (
+      {loading ? (
+        <InlineSpinner label="Loading your listings…" />
+      ) : listings.length === 0 ? (
         <EmptyState
           icon={Store}
           title="You have no active listings"
@@ -133,7 +142,7 @@ export default function MyListingsPage() {
                   <Pencil className="size-4" />
                 </button>
                 <button
-                  onClick={() => setListings((prev) => prev.filter((p) => p.id !== product.id))}
+                  onClick={() => handleDelete(product.id)}
                   className="flex size-9 items-center justify-center rounded-full text-error hover:bg-error-container"
                   aria-label="Delete listing"
                 >

@@ -1,19 +1,33 @@
-import { useLocalStorage } from '@/hooks/useLocalStorage'
+import { useCallback, useEffect, useState } from 'react'
+import * as marketplaceService from '@/services/marketplaceService'
 
 export function useFavorites() {
-  const [favoriteIds, setFavoriteIds] = useLocalStorage<string[]>('farm-bhade-favorites', [])
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([])
 
-  function toggleFavorite(productId: string) {
-    setFavoriteIds(
-      favoriteIds.includes(productId)
-        ? favoriteIds.filter((id) => id !== productId)
-        : [...favoriteIds, productId],
-    )
-  }
+  useEffect(() => {
+    marketplaceService
+      .listFavorites()
+      .then((products) => setFavoriteIds(products.map((p) => p.id)))
+      .catch(() => {})
+  }, [])
 
-  function isFavorite(productId: string) {
-    return favoriteIds.includes(productId)
-  }
+  const isFavorite = useCallback((productId: string) => favoriteIds.includes(productId), [favoriteIds])
+
+  const toggleFavorite = useCallback(
+    (productId: string) => {
+      const currentlyFavorited = favoriteIds.includes(productId)
+      setFavoriteIds((prev) => (currentlyFavorited ? prev.filter((id) => id !== productId) : [...prev, productId]))
+
+      const request = currentlyFavorited
+        ? marketplaceService.removeFavorite(productId)
+        : marketplaceService.addFavorite(productId)
+
+      request.catch(() => {
+        setFavoriteIds((prev) => (currentlyFavorited ? [...prev, productId] : prev.filter((id) => id !== productId)))
+      })
+    },
+    [favoriteIds],
+  )
 
   return { favoriteIds, toggleFavorite, isFavorite }
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Stethoscope,
@@ -23,12 +23,16 @@ import { MarqueeTicker } from '@/components/common/MarqueeTicker'
 import { useAuth } from '@/hooks/useAuth'
 import { useLivePrices } from '@/hooks/useLivePrices'
 import { ROUTES } from '@/constants/routes'
-import { getWeatherForDistrict } from '@/mocks/weather'
 import { MOCK_TODAY_TASKS } from '@/mocks/tasks'
-import { MOCK_MARKET_PRICES } from '@/mocks/marketPrices'
-import { MOCK_NOTIFICATIONS } from '@/mocks/notifications'
-import { MOCK_DIAGNOSIS_HISTORY } from '@/mocks/diagnoses'
+import * as notificationsService from '@/services/notificationsService'
+import * as cropDoctorService from '@/services/cropDoctorService'
+import * as marketPricesService from '@/services/marketPricesService'
+import * as weatherService from '@/services/weatherService'
 import { JOURNEY_STAGE_LABELS, JOURNEY_STAGES } from '@/constants/app'
+import type { Notification } from '@/types/notification'
+import type { CropDiagnosis } from '@/types/cropDoctor'
+import type { MarketPriceEntry } from '@/types/marketPrice'
+import type { WeatherSnapshot } from '@/types/weather'
 import { formatRelativeTime } from '@/utils/format'
 import { cn } from '@/utils/cn'
 
@@ -56,13 +60,24 @@ const actionTone = {
 export default function FarmerDashboardPage() {
   const { user } = useAuth()
   const [tasks, setTasks] = useState(MOCK_TODAY_TASKS)
-  const weather = getWeatherForDistrict(user?.district ?? 'Masindi')
-  const WeatherIcon = WEATHER_ICONS[weather.condition]
+  const [weather, setWeather] = useState<WeatherSnapshot | null>(null)
+  const [weatherError, setWeatherError] = useState(false)
   const currentStage = JOURNEY_STAGES[1]
-  const latestDiagnosis = MOCK_DIAGNOSIS_HISTORY[0]
-  const { prices: livePrices, lastUpdated } = useLivePrices(MOCK_MARKET_PRICES)
+  const [latestDiagnosis, setLatestDiagnosis] = useState<CropDiagnosis | null>(null)
+  const [basePrices, setBasePrices] = useState<MarketPriceEntry[]>([])
+  const { prices: livePrices, lastUpdated } = useLivePrices(basePrices)
   const topPrices = livePrices.slice(0, 4)
-  const recentNotifications = MOCK_NOTIFICATIONS.slice(0, 3)
+  const [recentNotifications, setRecentNotifications] = useState<Notification[]>([])
+
+  useEffect(() => {
+    notificationsService.listNotifications().then((result) => setRecentNotifications(result.slice(0, 3)))
+    cropDoctorService.getDiagnosisHistory().then((result) => setLatestDiagnosis(result[0] ?? null))
+    marketPricesService.listMarketPrices().then(setBasePrices)
+    weatherService
+      .getWeather(user?.district ?? 'Masindi')
+      .then(setWeather)
+      .catch(() => setWeatherError(true))
+  }, [user?.district])
 
   function toggleTask(id: string) {
     setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t)))
@@ -98,14 +113,25 @@ export default function FarmerDashboardPage() {
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Weather */}
         <Card className="lg:col-span-1">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm font-semibold text-on-surface-variant">{weather.district}</p>
-              <p className="mt-1 text-3xl font-bold text-on-surface">{weather.temperatureC}&deg;C</p>
-            </div>
-            <WeatherIcon className="size-10 text-info" />
-          </div>
-          <p className="mt-3 text-sm text-on-surface-variant">{weather.advisory}</p>
+          {weather ? (
+            <>
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-on-surface-variant">{weather.district}</p>
+                  <p className="mt-1 text-3xl font-bold text-on-surface">{weather.temperatureC}&deg;C</p>
+                </div>
+                {(() => {
+                  const WeatherIcon = WEATHER_ICONS[weather.condition]
+                  return <WeatherIcon className="size-10 text-info" />
+                })()}
+              </div>
+              <p className="mt-3 text-sm text-on-surface-variant">{weather.advisory}</p>
+            </>
+          ) : weatherError ? (
+            <p className="text-sm text-on-surface-variant">Could not load weather right now.</p>
+          ) : (
+            <p className="text-sm text-on-surface-variant">Loading weather…</p>
+          )}
           <Link
             to={ROUTES.weather}
             className="mt-3 inline-block text-sm font-semibold text-primary hover:underline"
@@ -192,30 +218,41 @@ export default function FarmerDashboardPage() {
         {/* AI crop status */}
         <Card className="lg:col-span-1">
           <SectionHeader title="AI Crop Doctor" seeAllHref={ROUTES.aiCropDoctor} />
-          <div className="flex items-center gap-3">
-            <span
-              className="flex size-14 shrink-0 items-center justify-center rounded-lg"
-              style={{ backgroundColor: latestDiagnosis.imageColor + '33' }}
-            >
-              <Sprout className="size-6" style={{ color: latestDiagnosis.imageColor }} />
-            </span>
-            <div className="min-w-0">
-              <p className="truncate font-semibold text-on-surface">{latestDiagnosis.condition}</p>
-              <p className="text-xs text-on-surface-variant">{formatRelativeTime(latestDiagnosis.createdAt)}</p>
-              <Badge
-                tone={
-                  latestDiagnosis.severity === 'healthy'
-                    ? 'success'
-                    : latestDiagnosis.severity === 'severe'
-                      ? 'error'
-                      : 'warning'
-                }
-                className="mt-1.5"
-              >
-                {latestDiagnosis.severity}
-              </Badge>
+          {!latestDiagnosis ? (
+            <p className="text-sm text-on-surface-variant">
+              No diagnoses yet. Photograph a maize leaf or cob to get started.
+            </p>
+          ) : (
+            <div className="flex items-center gap-3">
+              <span className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-primary-container">
+                {latestDiagnosis.isCropPhoto ? (
+                  <img src={latestDiagnosis.imageUrl} alt="" className="size-full object-cover" />
+                ) : (
+                  <Sprout className="size-6 text-on-primary-container" />
+                )}
+              </span>
+              <div className="min-w-0">
+                <p className="truncate font-semibold text-on-surface">
+                  {latestDiagnosis.isCropPhoto ? latestDiagnosis.condition : 'Not recognized as a crop photo'}
+                </p>
+                <p className="text-xs text-on-surface-variant">{formatRelativeTime(latestDiagnosis.createdAt)}</p>
+                {latestDiagnosis.severity && (
+                  <Badge
+                    tone={
+                      latestDiagnosis.severity === 'healthy'
+                        ? 'success'
+                        : latestDiagnosis.severity === 'severe'
+                          ? 'error'
+                          : 'warning'
+                    }
+                    className="mt-1.5"
+                  >
+                    {latestDiagnosis.severity}
+                  </Badge>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </Card>
       </div>
 

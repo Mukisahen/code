@@ -54,7 +54,9 @@ marketPricesRouter.post(
     const previous = await prisma.marketPriceEntry.findUnique({
       where: { district_category: { district: payload.district, category: payload.category } },
     })
-    const changePercent = previous ? ((payload.pricePerKg - previous.pricePerKg) / previous.pricePerKg) * 100 : 0
+    const changePercent = previous
+      ? Math.round(((payload.pricePerKg - previous.pricePerKg) / previous.pricePerKg) * 1000) / 10
+      : 0
 
     const entry = await prisma.marketPriceEntry.upsert({
       where: { district_category: { district: payload.district, category: payload.category } },

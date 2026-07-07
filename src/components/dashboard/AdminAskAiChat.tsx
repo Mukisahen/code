@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Send, Sparkles, Loader2 } from 'lucide-react'
-import { askAdminAssistant } from '@/services/adminAssistantService'
+import { askAdminAssistant } from '@/services/adminService'
 import type { AdminAssistantMessage } from '@/types/adminAssistant'
 import { cn } from '@/utils/cn'
 

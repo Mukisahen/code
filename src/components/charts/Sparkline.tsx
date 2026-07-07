@@ -19,15 +19,18 @@ export function Sparkline({
   const [hoverIndex, setHoverIndex] = useState<number | null>(null)
 
   const padding = 4
-  const min = Math.min(...data)
-  const max = Math.max(...data)
+  const min = data.length > 0 ? Math.min(...data) : 0
+  const max = data.length > 0 ? Math.max(...data) : 0
   const range = max - min || 1
+  const divisor = data.length > 1 ? data.length - 1 : 1
 
   const points = data.map((value, i) => {
-    const x = padding + (i / (data.length - 1)) * (width - padding * 2)
+    const x = padding + (i / divisor) * (width - padding * 2)
     const y = height - padding - ((value - min) / range) * (height - padding * 2)
     return { x, y, value }
   })
+
+  if (points.length === 0) return null
 
   const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ')
   const areaPath = `${linePath} L ${points[points.length - 1].x} ${height} L ${points[0].x} ${height} Z`

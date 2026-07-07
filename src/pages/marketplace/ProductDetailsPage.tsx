@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -18,9 +18,10 @@ import { Button } from '@/components/common/Button'
 import { Input } from '@/components/common/Input'
 import { Avatar } from '@/components/common/Avatar'
 import { EmptyState } from '@/components/common/EmptyState'
-import { MOCK_PRODUCTS } from '@/mocks/products'
+import { InlineSpinner } from '@/components/common/InlineSpinner'
+import * as marketplaceService from '@/services/marketplaceService'
 import { CATEGORY_IMAGES } from '@/mocks/categoryImages'
-import { PRODUCT_CATEGORY_LABELS } from '@/types/product'
+import { PRODUCT_CATEGORY_LABELS, type Product } from '@/types/product'
 import { useFavorites } from '@/hooks/useFavorites'
 import { ROUTES } from '@/constants/routes'
 import { formatRelativeTime } from '@/utils/format'
@@ -33,10 +34,41 @@ export default function ProductDetailsPage() {
   const [offerAmount, setOfferAmount] = useState('')
   const [offerMessage, setOfferMessage] = useState('')
   const [offerSent, setOfferSent] = useState(false)
+  const [offerError, setOfferError] = useState<string | null>(null)
+  const [product, setProduct] = useState<Product | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [notFound, setProductNotFound] = useState(false)
 
-  const product = MOCK_PRODUCTS.find((p) => p.id === productId)
+  useEffect(() => {
+    if (!productId) return
+    let cancelled = false
 
-  if (!product) {
+    marketplaceService
+      .getProduct(productId)
+      .then((result) => {
+        if (!cancelled) setProduct(result)
+      })
+      .catch(() => {
+        if (!cancelled) setProductNotFound(true)
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [productId])
+
+  if (loading) {
+    return (
+      <DashboardLayout title="Product Details">
+        <InlineSpinner label="Loading listing…" />
+      </DashboardLayout>
+    )
+  }
+
+  if (notFound || !product) {
     return (
       <DashboardLayout title="Product not found">
         <EmptyState
@@ -55,10 +87,21 @@ export default function ProductDetailsPage() {
 
   const favorited = isFavorite(product.id)
 
-  function handleOffer(event: FormEvent) {
+  async function handleOffer(event: FormEvent) {
     event.preventDefault()
-    if (!offerAmount.trim()) return
-    setOfferSent(true)
+    if (!offerAmount.trim() || !product) return
+    setOfferError(null)
+    try {
+      await marketplaceService.createOffer({
+        productId: product.id,
+        offerAmount: Number(offerAmount),
+        unit: product.unit,
+        quantity: offerMessage.trim() || `1 ${product.unit}`,
+      })
+      setOfferSent(true)
+    } catch {
+      setOfferError('Could not send your offer. Please try again.')
+    }
   }
 
   return (
@@ -136,6 +179,7 @@ export default function ProductDetailsPage() {
                   value={offerMessage}
                   onChange={(e) => setOfferMessage(e.target.value)}
                   className="flex-1"
+                  error={offerError ?? undefined}
                 />
                 <Button type="submit">Send Offer</Button>
               </form>

@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { LogOut, Bell, MessageCircle } from 'lucide-react'
 import { ThemeToggle } from '@/components/common/ThemeToggle'
@@ -7,7 +7,9 @@ import { Sidebar } from '@/components/layout/Sidebar'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { useAuth } from '@/hooks/useAuth'
 import { ROUTES } from '@/constants/routes'
-import { MOCK_NOTIFICATIONS } from '@/mocks/notifications'
+import * as notificationsService from '@/services/notificationsService'
+
+const UNREAD_POLL_MS = 20000
 
 interface DashboardLayoutProps {
   title: string
@@ -18,11 +20,23 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ title, subtitle, children, actions }: DashboardLayoutProps) {
   const { user, logout } = useAuth()
-  const unreadCount = MOCK_NOTIFICATIONS.filter((n) => !n.read).length
+  const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
     document.title = `${title} · Farm Bhade`
   }, [title])
+
+  useEffect(() => {
+    function refresh() {
+      notificationsService
+        .listNotifications()
+        .then((notifications) => setUnreadCount(notifications.filter((n) => !n.read).length))
+        .catch(() => {})
+    }
+    refresh()
+    const interval = setInterval(refresh, UNREAD_POLL_MS)
+    return () => clearInterval(interval)
+  }, [])
 
   if (!user) return null
 

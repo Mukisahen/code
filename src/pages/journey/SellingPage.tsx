@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ShoppingCart, Package, Handshake, Wallet, Check, X, PlusCircle } from 'lucide-react'
 import { DashboardLayout } from '@/layouts/DashboardLayout'
@@ -8,13 +8,13 @@ import { Button } from '@/components/common/Button'
 import { StatTile } from '@/components/common/StatTile'
 import { SectionHeader } from '@/components/common/SectionHeader'
 import { EmptyState } from '@/components/common/EmptyState'
+import { InlineSpinner } from '@/components/common/InlineSpinner'
 import { MOCK_STORAGE_BATCHES } from '@/mocks/tasks'
-import { MOCK_PRODUCTS } from '@/mocks/products'
+import * as marketplaceService from '@/services/marketplaceService'
 import { CATEGORY_IMAGES } from '@/mocks/categoryImages'
-import { PRODUCT_CATEGORY_LABELS } from '@/types/product'
-import { MOCK_OFFERS } from '@/mocks/offers'
-import { MOCK_ORDERS } from '@/mocks/orders'
-import type { OfferStatus } from '@/types/selling'
+import { PRODUCT_CATEGORY_LABELS, type Product } from '@/types/product'
+import type { Order } from '@/types/order'
+import type { ProductOffer, OfferStatus } from '@/types/selling'
 import { ROUTES } from '@/constants/routes'
 import { formatRelativeTime, formatUGX } from '@/utils/format'
 import { cn } from '@/utils/cn'
@@ -26,15 +26,47 @@ const OFFER_STATUS_TONE: Record<OfferStatus, 'warning' | 'success' | 'error'> = 
 }
 
 export default function SellingPage() {
-  const [offers, setOffers] = useState(MOCK_OFFERS)
+  const [offers, setOffers] = useState<ProductOffer[]>([])
+  const [activeListings, setActiveListings] = useState<Product[]>([])
+  const [orders, setOrders] = useState<Order[]>([])
+  const [loading, setLoading] = useState(true)
+
   const readyToSell = MOCK_STORAGE_BATCHES.filter((b) => b.status !== 'at-risk')
-  const activeListings = MOCK_PRODUCTS.slice(0, 3)
-  const completedSales = MOCK_ORDERS.filter((o) => o.status === 'completed')
+
+  useEffect(() => {
+    Promise.all([
+      marketplaceService.getMyProducts(),
+      marketplaceService.getReceivedOffers(),
+      marketplaceService.getSellingOrders(),
+    ])
+      .then(([products, receivedOffers, sellingOrders]) => {
+        setActiveListings(products)
+        setOffers(receivedOffers)
+        setOrders(sellingOrders)
+      })
+      .finally(() => setLoading(false))
+  }, [])
+
+  const completedSales = orders.filter((o) => o.status === 'completed')
   const seasonRevenue = completedSales.reduce((sum, o) => sum + o.totalAmount, 0)
   const pendingOffers = offers.filter((o) => o.status === 'pending')
 
-  function decideOffer(id: string, status: OfferStatus) {
+  async function decideOffer(id: string, status: OfferStatus) {
+    const previous = offers
     setOffers((prev) => prev.map((o) => (o.id === id ? { ...o, status } : o)))
+    try {
+      await marketplaceService.decideOffer(id, status)
+    } catch {
+      setOffers(previous)
+    }
+  }
+
+  if (loading) {
+    return (
+      <DashboardLayout title="Selling" subtitle="Turn ready stock into sales">
+        <InlineSpinner label="Loading your selling activity…" />
+      </DashboardLayout>
+    )
   }
 
   return (
@@ -84,24 +116,28 @@ export default function SellingPage() {
 
         <Card>
           <SectionHeader title="Active listings" seeAllHref={ROUTES.myListings} />
-          <div className="space-y-3">
-            {activeListings.map((product) => (
-              <div key={product.id} className="flex items-center gap-3">
-                <img
-                  src={CATEGORY_IMAGES[product.category].sm}
-                  alt={PRODUCT_CATEGORY_LABELS[product.category]}
-                  className="size-10 shrink-0 rounded-lg object-cover"
-                />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold text-on-surface">{product.title}</p>
-                  <p className="text-xs text-on-surface-variant">
-                    UGX {product.pricePerUnit.toLocaleString()}/{product.unit}
-                  </p>
+          {activeListings.length === 0 ? (
+            <EmptyState icon={ShoppingCart} title="No active listings yet" />
+          ) : (
+            <div className="space-y-3">
+              {activeListings.slice(0, 3).map((product) => (
+                <div key={product.id} className="flex items-center gap-3">
+                  <img
+                    src={CATEGORY_IMAGES[product.category].sm}
+                    alt={PRODUCT_CATEGORY_LABELS[product.category]}
+                    className="size-10 shrink-0 rounded-lg object-cover"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-semibold text-on-surface">{product.title}</p>
+                    <p className="text-xs text-on-surface-variant">
+                      UGX {product.pricePerUnit.toLocaleString()}/{product.unit}
+                    </p>
+                  </div>
+                  <Badge tone="success">Listed</Badge>
                 </div>
-                <Badge tone="success">Listed</Badge>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </Card>
       </div>
 

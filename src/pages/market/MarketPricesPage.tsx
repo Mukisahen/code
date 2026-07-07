@@ -1,22 +1,51 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { TrendingUp } from 'lucide-react'
 import { DashboardLayout } from '@/layouts/DashboardLayout'
 import { Card } from '@/components/common/Card'
 import { Sparkline } from '@/components/charts/Sparkline'
 import { LiveBadge } from '@/components/common/LiveBadge'
+import { InlineSpinner } from '@/components/common/InlineSpinner'
 import { useLivePrices } from '@/hooks/useLivePrices'
-import { MOCK_MARKET_PRICES, PRICE_TREND_7D } from '@/mocks/marketPrices'
+import * as marketPricesService from '@/services/marketPricesService'
+import type { MarketPriceEntry } from '@/types/marketPrice'
 import { cn } from '@/utils/cn'
+
+const TREND_DISTRICT = 'Masindi'
+const TREND_CATEGORY = 'Dry Grain'
 
 export default function MarketPricesPage() {
   const [district, setDistrict] = useState('all')
-  const districts = useMemo(() => ['all', ...new Set(MOCK_MARKET_PRICES.map((p) => p.district))], [])
-  const { prices, lastUpdated } = useLivePrices(MOCK_MARKET_PRICES)
+  const [basePrices, setBasePrices] = useState<MarketPriceEntry[]>([])
+  const [trend, setTrend] = useState<number[]>([])
+  const [loading, setLoading] = useState(true)
+  const { prices, lastUpdated } = useLivePrices(basePrices)
+
+  useEffect(() => {
+    Promise.all([
+      marketPricesService.listMarketPrices(),
+      marketPricesService.getPriceTrend(TREND_DISTRICT, TREND_CATEGORY),
+    ])
+      .then(([priceResult, trendResult]) => {
+        setBasePrices(priceResult)
+        setTrend(trendResult)
+      })
+      .finally(() => setLoading(false))
+  }, [])
+
+  const districts = useMemo(() => ['all', ...new Set(prices.map((p) => p.district))], [prices])
 
   const filtered = useMemo(
     () => (district === 'all' ? prices : prices.filter((p) => p.district === district)),
     [district, prices],
   )
+
+  if (loading) {
+    return (
+      <DashboardLayout title="Market Prices" subtitle="Live maize prices across Uganda">
+        <InlineSpinner label="Loading prices…" />
+      </DashboardLayout>
+    )
+  }
 
   return (
     <DashboardLayout title="Market Prices" subtitle="Live maize prices across Uganda">
@@ -24,18 +53,17 @@ export default function MarketPricesPage() {
         <div className="flex items-center justify-between">
           <div>
             <p className="flex items-center gap-1.5 text-sm font-semibold text-on-surface-variant">
-              <TrendingUp className="size-4 text-primary" /> Dry Grain Maize — 7 day trend
+              <TrendingUp className="size-4 text-primary" /> {TREND_CATEGORY} Maize — 7 day trend ({TREND_DISTRICT})
             </p>
-            <p className="mt-1 text-2xl font-bold text-on-surface">UGX {PRICE_TREND_7D.at(-1)?.toLocaleString()}/kg</p>
+            <p className="mt-1 text-2xl font-bold text-on-surface">
+              {trend.length > 0 ? `UGX ${trend.at(-1)?.toLocaleString()}/kg` : 'No trend data yet'}
+            </p>
           </div>
           <LiveBadge lastUpdated={lastUpdated} />
         </div>
-        <Sparkline
-          data={PRICE_TREND_7D}
-          valueFormatter={(v) => `UGX ${v.toLocaleString()}`}
-          height={72}
-          width={600}
-        />
+        {trend.length > 0 && (
+          <Sparkline data={trend} valueFormatter={(v) => `UGX ${v.toLocaleString()}`} height={72} width={600} />
+        )}
       </Card>
 
       <div className="mb-4 flex justify-end">

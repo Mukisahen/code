@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Camera,
   Upload,
@@ -14,71 +14,24 @@ import { Card } from '@/components/common/Card'
 import { Button } from '@/components/common/Button'
 import { Badge } from '@/components/common/Badge'
 import { EmptyState } from '@/components/common/EmptyState'
+import { InlineSpinner } from '@/components/common/InlineSpinner'
 import { AskAiChat } from '@/components/crop-doctor/AskAiChat'
-import { MOCK_DIAGNOSIS_HISTORY } from '@/mocks/diagnoses'
+import * as cropDoctorService from '@/services/cropDoctorService'
 import type { CropDiagnosis } from '@/types/cropDoctor'
 import { formatRelativeTime } from '@/utils/format'
-import { looksLikeCropPhoto } from '@/utils/imageHeuristics'
 import { cn } from '@/utils/cn'
 
-type Mode = 'capture' | 'analyzing' | 'result' | 'unrecognized'
+type Mode = 'capture' | 'analyzing' | 'result' | 'unrecognized' | 'error'
 type Tab = 'diagnose' | 'ask-ai' | 'history'
 
 const TAB_LABEL: Record<Tab, string> = { diagnose: 'Diagnose', 'ask-ai': 'Ask AI', history: 'History' }
 
-const SEVERITY_TONE: Record<CropDiagnosis['severity'], 'success' | 'warning' | 'error'> = {
+const SEVERITY_TONE: Record<NonNullable<CropDiagnosis['severity']>, 'success' | 'warning' | 'error'> = {
   healthy: 'success',
   low: 'warning',
   moderate: 'warning',
   severe: 'error',
 }
-
-const MOCK_RESULT_POOL: Omit<CropDiagnosis, 'id' | 'createdAt' | 'imageColor'>[] = [
-  {
-    condition: 'Northern Corn Leaf Blight',
-    severity: 'moderate',
-    confidence: 89,
-    summary: 'Grey-green cigar-shaped lesions detected on lower leaves, consistent with early blight infection.',
-    recommendations: [
-      'Apply a mancozeb-based fungicide within 48 hours.',
-      'Remove and burn severely affected leaves.',
-      'Improve field drainage to reduce leaf wetness duration.',
-      'Rotate with a non-host crop next season.',
-    ],
-  },
-  {
-    condition: 'Healthy Crop',
-    severity: 'healthy',
-    confidence: 96,
-    summary: 'No visible signs of disease or pest damage. Leaf colour and structure look strong.',
-    recommendations: [
-      'Continue current fertilizer schedule.',
-      'Scout weekly for fall armyworm during vegetative stage.',
-    ],
-  },
-  {
-    condition: 'Fall Armyworm Damage',
-    severity: 'severe',
-    confidence: 92,
-    summary: 'Characteristic window-pane feeding and frass detected in the whorl.',
-    recommendations: [
-      'Apply an approved insecticide targeting armyworm larvae immediately.',
-      'Scout neighbouring plots to contain spread.',
-      'Consider biological control (Bt-based products) for future prevention.',
-    ],
-  },
-  {
-    condition: 'Nitrogen Deficiency',
-    severity: 'low',
-    confidence: 84,
-    summary: 'Yellowing (chlorosis) starting from leaf tips in a V-shape, typical of nitrogen deficiency.',
-    recommendations: [
-      'Apply top-dressing nitrogen fertilizer (Urea or CAN).',
-      'Recheck soil pH — nutrient uptake drops below pH 5.5.',
-      'Re-assess crop colour in 7-10 days after application.',
-    ],
-  },
-]
 
 export default function AiCropDoctorPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -86,7 +39,15 @@ export default function AiCropDoctorPage() {
   const [mode, setMode] = useState<Mode>('capture')
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [result, setResult] = useState<CropDiagnosis | null>(null)
-  const [history, setHistory] = useState<CropDiagnosis[]>(MOCK_DIAGNOSIS_HISTORY)
+  const [history, setHistory] = useState<CropDiagnosis[]>([])
+  const [historyLoading, setHistoryLoading] = useState(true)
+
+  useEffect(() => {
+    cropDoctorService
+      .getDiagnosisHistory()
+      .then(setHistory)
+      .finally(() => setHistoryLoading(false))
+  }, [])
 
   async function handleFileSelected(file: File | undefined) {
     if (!file) return
@@ -94,26 +55,20 @@ export default function AiCropDoctorPage() {
     setPreviewUrl(url)
     setMode('analyzing')
 
-    const [isCropPhoto] = await Promise.all([
-      looksLikeCropPhoto(file).catch(() => true),
-      new Promise((resolve) => setTimeout(resolve, 1800)),
-    ])
+    try {
+      const diagnosis = await cropDoctorService.diagnosePhoto(file)
+      setHistory((prev) => [diagnosis, ...prev])
 
-    if (!isCropPhoto) {
-      setMode('unrecognized')
-      return
-    }
+      if (!diagnosis.isCropPhoto) {
+        setMode('unrecognized')
+        return
+      }
 
-    const template = MOCK_RESULT_POOL[Math.floor(Math.random() * MOCK_RESULT_POOL.length)]
-    const diagnosis: CropDiagnosis = {
-      ...template,
-      id: `diag-${Date.now()}`,
-      imageColor: '#4C7A3A',
-      createdAt: new Date().toISOString(),
+      setResult(diagnosis)
+      setMode('result')
+    } catch {
+      setMode('error')
     }
-    setResult(diagnosis)
-    setHistory((prev) => [diagnosis, ...prev])
-    setMode('result')
   }
 
   function reset() {
@@ -199,6 +154,23 @@ export default function AiCropDoctorPage() {
             </div>
           )}
 
+          {mode === 'error' && (
+            <div className="flex flex-col items-center gap-4 py-6 text-center">
+              <span className="flex size-14 items-center justify-center rounded-full bg-error-container text-on-error-container">
+                <ImageOff className="size-7" />
+              </span>
+              <div>
+                <p className="font-bold text-on-surface">Something went wrong</p>
+                <p className="mt-1 max-w-xs text-sm text-on-surface-variant">
+                  We couldn&apos;t analyze that photo. Please check your connection and try again.
+                </p>
+              </div>
+              <Button variant="outlined" leadingIcon={<RotateCcw className="size-4" />} onClick={reset}>
+                Try again
+              </Button>
+            </div>
+          )}
+
           {mode === 'unrecognized' && previewUrl && (
             <div className="flex flex-col items-center gap-4 py-6 text-center">
               <img src={previewUrl} alt="Uploaded photo" className="h-52 w-full rounded-lg object-cover opacity-60" />
@@ -217,7 +189,7 @@ export default function AiCropDoctorPage() {
             </div>
           )}
 
-          {mode === 'result' && result && previewUrl && (
+          {mode === 'result' && result && previewUrl && result.severity && (
             <div className="flex flex-col gap-4">
               <img src={previewUrl} alt="Crop preview" className="h-52 w-full rounded-lg object-cover" />
               <div>
@@ -249,22 +221,21 @@ export default function AiCropDoctorPage() {
 
       {tab === 'history' && (
         <div className="mx-auto max-w-xl space-y-3">
-          {history.length === 0 ? (
+          {historyLoading ? (
+            <InlineSpinner label="Loading history…" />
+          ) : history.length === 0 ? (
             <EmptyState icon={HistoryIcon} title="No diagnoses yet" />
           ) : (
             history.map((diag) => (
               <Card key={diag.id} className="flex items-center gap-3">
-                <span
-                  className="flex size-12 shrink-0 items-center justify-center rounded-lg"
-                  style={{ backgroundColor: diag.imageColor + '33' }}
-                >
-                  <Sprout className="size-5" style={{ color: diag.imageColor }} />
-                </span>
+                <img src={diag.imageUrl} alt="" className="size-12 shrink-0 rounded-lg object-cover" />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold text-on-surface">{diag.condition}</p>
+                  <p className="truncate font-semibold text-on-surface">
+                    {diag.isCropPhoto ? diag.condition : 'Not recognized as a crop photo'}
+                  </p>
                   <p className="text-xs text-on-surface-variant">{formatRelativeTime(diag.createdAt)}</p>
                 </div>
-                <Badge tone={SEVERITY_TONE[diag.severity]}>{diag.severity}</Badge>
+                {diag.severity && <Badge tone={SEVERITY_TONE[diag.severity]}>{diag.severity}</Badge>}
               </Card>
             ))
           )}

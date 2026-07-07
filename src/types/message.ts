@@ -10,7 +10,7 @@ export interface Conversation {
   id: string
   participantName: string
   participantInitials: string
-  participantRole: 'farmer' | 'buyer' | 'processor'
+  participantRole: 'farmer' | 'buyer' | 'processor' | 'admin'
   lastMessage: string
   lastMessageAt: string
   unreadCount: number

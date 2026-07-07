@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { PlusCircle, ClipboardList } from 'lucide-react'
 import { DashboardLayout } from '@/layouts/DashboardLayout'
 import { Card } from '@/components/common/Card'
@@ -6,7 +6,8 @@ import { Badge } from '@/components/common/Badge'
 import { Button } from '@/components/common/Button'
 import { Input } from '@/components/common/Input'
 import { EmptyState } from '@/components/common/EmptyState'
-import { MOCK_BUYER_REQUESTS } from '@/mocks/orders'
+import { InlineSpinner } from '@/components/common/InlineSpinner'
+import * as marketplaceService from '@/services/marketplaceService'
 import type { BuyerRequest, BuyerRequestStatus } from '@/types/order'
 import { useAuth } from '@/hooks/useAuth'
 import { formatRelativeTime } from '@/utils/format'
@@ -21,33 +22,42 @@ const STATUS_TONE: Record<BuyerRequestStatus, 'neutral' | 'warning' | 'success' 
 export default function BuyerRequestsPage() {
   const { user } = useAuth()
   const canPostRequests = user?.role === 'buyer' || user?.role === 'processor'
-  const [requests, setRequests] = useState<BuyerRequest[]>(MOCK_BUYER_REQUESTS)
+  const [requests, setRequests] = useState<BuyerRequest[]>([])
+  const [loading, setLoading] = useState(true)
   const [isAdding, setIsAdding] = useState(false)
   const [category, setCategory] = useState('')
   const [quantity, setQuantity] = useState('')
   const [targetPrice, setTargetPrice] = useState('')
+  const [formError, setFormError] = useState<string | null>(null)
 
-  function handleAdd(event: FormEvent) {
+  useEffect(() => {
+    marketplaceService
+      .listBuyerRequests()
+      .then(setRequests)
+      .finally(() => setLoading(false))
+  }, [])
+
+  async function handleAdd(event: FormEvent) {
     event.preventDefault()
     if (!category.trim() || !quantity.trim() || !user) return
-    setRequests((prev) => [
-      {
-        id: `req-${Date.now()}`,
-        buyerName: user.fullName,
+    setFormError(null)
+
+    try {
+      const created = await marketplaceService.createBuyerRequest({
         district: user.district,
         category,
         quantityNeeded: quantity,
         targetPrice: Number(targetPrice) || 0,
         notes: '',
-        status: 'open',
-        postedAt: new Date().toISOString(),
-      },
-      ...prev,
-    ])
-    setCategory('')
-    setQuantity('')
-    setTargetPrice('')
-    setIsAdding(false)
+      })
+      setRequests((prev) => [created, ...prev])
+      setCategory('')
+      setQuantity('')
+      setTargetPrice('')
+      setIsAdding(false)
+    } catch {
+      setFormError('Could not post request. Please try again.')
+    }
   }
 
   return (
@@ -77,6 +87,7 @@ export default function BuyerRequestsPage() {
               value={targetPrice}
               onChange={(e) => setTargetPrice(e.target.value)}
             />
+            {formError && <p className="text-xs font-medium text-error sm:col-span-3">{formError}</p>}
             <Button type="submit" className="sm:col-span-3">
               Post request
             </Button>
@@ -84,7 +95,9 @@ export default function BuyerRequestsPage() {
         </Card>
       )}
 
-      {requests.length === 0 ? (
+      {loading ? (
+        <InlineSpinner label="Loading requests…" />
+      ) : requests.length === 0 ? (
         <EmptyState icon={ClipboardList} title="No requests yet" />
       ) : (
         <div className="space-y-3">

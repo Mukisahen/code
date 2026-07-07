@@ -1,21 +1,17 @@
+import { useEffect, useMemo, useState } from 'react'
 import { FileBarChart, Download, Wheat, DollarSign, Package, ShoppingBag } from 'lucide-react'
 import { DashboardLayout } from '@/layouts/DashboardLayout'
 import { Card } from '@/components/common/Card'
 import { StatTile } from '@/components/common/StatTile'
 import { SectionHeader } from '@/components/common/SectionHeader'
 import { Button } from '@/components/common/Button'
+import { InlineSpinner } from '@/components/common/InlineSpinner'
 import { BarChart } from '@/components/charts/BarChart'
-import { MOCK_ORDERS } from '@/mocks/orders'
+import * as marketplaceService from '@/services/marketplaceService'
 import { useAuth } from '@/hooks/useAuth'
 import { formatUGX } from '@/utils/format'
+import type { Order } from '@/types/order'
 import type { UserRole } from '@/types/user'
-
-const ORDERS_BY_MONTH = [
-  { label: 'Apr', value: 12 },
-  { label: 'May', value: 18 },
-  { label: 'Jun', value: 24 },
-  { label: 'Jul', value: 15 },
-]
 
 const REPORTS_BY_ROLE: Record<UserRole, { id: string; title: string; period: string; icon: typeof DollarSign }[]> = {
   farmer: [
@@ -40,14 +36,41 @@ const REPORTS_BY_ROLE: Record<UserRole, { id: string; title: string; period: str
   ],
 }
 
+const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
 export default function ReportsPage() {
   const { user } = useAuth()
   const role = user?.role ?? 'farmer'
   const isBuyer = role === 'buyer'
   const REPORTS = REPORTS_BY_ROLE[role]
+  const [orders, setOrders] = useState<Order[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const totalAmount = MOCK_ORDERS.filter((o) => o.status === 'completed').reduce((sum, o) => sum + o.totalAmount, 0)
-  const ordersCompleted = MOCK_ORDERS.filter((o) => o.status === 'completed').length
+  useEffect(() => {
+    Promise.all([marketplaceService.getMyOrders(), marketplaceService.getSellingOrders()])
+      .then(([asBuyer, asSeller]) => setOrders([...asBuyer, ...asSeller]))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const completed = orders.filter((o) => o.status === 'completed')
+  const totalAmount = completed.reduce((sum, o) => sum + o.totalAmount, 0)
+
+  const ordersByMonth = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const o of orders) {
+      const key = new Date(o.createdAt).getMonth()
+      counts.set(MONTH_LABELS[key], (counts.get(MONTH_LABELS[key]) ?? 0) + 1)
+    }
+    return [...counts.entries()].map(([label, value]) => ({ label, value }))
+  }, [orders])
+
+  if (loading) {
+    return (
+      <DashboardLayout title="Reports" subtitle="Download summaries of your activity on Farm Bhade">
+        <InlineSpinner label="Loading reports…" />
+      </DashboardLayout>
+    )
+  }
 
   return (
     <DashboardLayout
@@ -59,17 +82,18 @@ export default function ReportsPage() {
           icon={DollarSign}
           label={isBuyer ? 'Total spend' : 'Total revenue'}
           value={formatUGX(totalAmount)}
-          trend={12.3}
           tone="primary"
         />
-        <StatTile icon={Package} label="Orders completed" value={String(ordersCompleted)} tone="secondary" />
+        <StatTile icon={Package} label="Orders completed" value={String(completed.length)} tone="secondary" />
         <StatTile icon={FileBarChart} label="Reports available" value={String(REPORTS.length)} tone="tertiary" />
       </div>
 
-      <Card className="mt-6">
-        <SectionHeader title="Orders by month" />
-        <BarChart data={ORDERS_BY_MONTH} valueFormatter={(v) => `${v} orders`} />
-      </Card>
+      {ordersByMonth.length > 0 && (
+        <Card className="mt-6">
+          <SectionHeader title="Orders by month" />
+          <BarChart data={ordersByMonth} valueFormatter={(v) => `${v} orders`} />
+        </Card>
+      )}
 
       <div className="mt-6 space-y-3">
         {REPORTS.map((report) => (

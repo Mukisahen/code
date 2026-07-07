@@ -1,11 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ShoppingCart, TrendingUp, CloudSun, Stethoscope, MessageCircle, Bell, CheckCheck } from 'lucide-react'
 import { DashboardLayout } from '@/layouts/DashboardLayout'
 import { Card } from '@/components/common/Card'
 import { Button } from '@/components/common/Button'
 import { EmptyState } from '@/components/common/EmptyState'
-import { MOCK_NOTIFICATIONS } from '@/mocks/notifications'
-import type { NotificationType } from '@/types/notification'
+import { InlineSpinner } from '@/components/common/InlineSpinner'
+import * as notificationsService from '@/services/notificationsService'
+import type { Notification, NotificationType } from '@/types/notification'
 import { formatRelativeTime } from '@/utils/format'
 import { cn } from '@/utils/cn'
 
@@ -19,14 +20,24 @@ const TYPE_ICON: Record<NotificationType, typeof Bell> = {
 }
 
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS)
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [loading, setLoading] = useState(true)
 
-  function markAllRead() {
+  useEffect(() => {
+    notificationsService
+      .listNotifications()
+      .then(setNotifications)
+      .finally(() => setLoading(false))
+  }, [])
+
+  async function markAllRead() {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
+    await notificationsService.markAllNotificationsRead()
   }
 
-  function markRead(id: string) {
+  async function markRead(id: string) {
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)))
+    await notificationsService.markNotificationRead(id)
   }
 
   return (
@@ -39,7 +50,9 @@ export default function NotificationsPage() {
         </Button>
       }
     >
-      {notifications.length === 0 ? (
+      {loading ? (
+        <InlineSpinner label="Loading notifications…" />
+      ) : notifications.length === 0 ? (
         <EmptyState icon={Bell} title="You're all caught up" />
       ) : (
         <div className="space-y-2.5">

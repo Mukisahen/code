@@ -30,7 +30,8 @@ export interface Product {
   district: string
   description: string
   seller: Seller
-  imageColor: string
+  imageColor?: string
+  imageUrl?: string
   postedAt: string
   featured?: boolean
 }

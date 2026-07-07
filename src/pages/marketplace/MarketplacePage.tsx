@@ -1,18 +1,19 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Search, PackageSearch, X } from 'lucide-react'
 import { DashboardLayout } from '@/layouts/DashboardLayout'
 import { ProductCard } from '@/components/marketplace/ProductCard'
 import { EmptyState } from '@/components/common/EmptyState'
+import { InlineSpinner } from '@/components/common/InlineSpinner'
 import { Input } from '@/components/common/Input'
 import { Button } from '@/components/common/Button'
-import { MOCK_PRODUCTS } from '@/mocks/products'
-import { PRODUCT_CATEGORY_LABELS, type ProductCategory } from '@/types/product'
+import * as marketplaceService from '@/services/marketplaceService'
+import { UGANDA_MAIZE_DISTRICTS } from '@/mocks/districts'
+import { PRODUCT_CATEGORY_LABELS, type Product, type ProductCategory } from '@/types/product'
 import { cn } from '@/utils/cn'
 
 type SortOption = 'newest' | 'price-asc' | 'price-desc'
 
 const CATEGORIES = Object.entries(PRODUCT_CATEGORY_LABELS) as [ProductCategory, string][]
-const DISTRICTS = [...new Set(MOCK_PRODUCTS.map((p) => p.district))].sort()
 
 export default function MarketplacePage() {
   const [search, setSearch] = useState('')
@@ -21,30 +22,38 @@ export default function MarketplacePage() {
   const [minPrice, setMinPrice] = useState('')
   const [maxPrice, setMaxPrice] = useState('')
   const [sort, setSort] = useState<SortOption>('newest')
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const hasActiveFilters = category !== 'all' || district !== 'all' || minPrice !== '' || maxPrice !== ''
 
-  const products = useMemo(() => {
-    let list = MOCK_PRODUCTS.filter((p) => {
-      const matchesSearch =
-        !search.trim() ||
-        p.title.toLowerCase().includes(search.toLowerCase()) ||
-        p.district.toLowerCase().includes(search.toLowerCase())
-      const matchesCategory = category === 'all' || p.category === category
-      const matchesDistrict = district === 'all' || p.district === district
-      const matchesMin = minPrice === '' || p.pricePerUnit >= Number(minPrice)
-      const matchesMax = maxPrice === '' || p.pricePerUnit <= Number(maxPrice)
-      return matchesSearch && matchesCategory && matchesDistrict && matchesMin && matchesMax
-    })
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    setError(null)
 
-    list = [...list].sort((a, b) => {
-      if (sort === 'price-asc') return a.pricePerUnit - b.pricePerUnit
-      if (sort === 'price-desc') return b.pricePerUnit - a.pricePerUnit
-      return new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime()
-    })
+    const timeout = setTimeout(() => {
+      marketplaceService
+        .listProducts({ category, district, minPrice, maxPrice, search, sort })
+        .then((result) => {
+          if (!cancelled) setProducts(result)
+        })
+        .catch(() => {
+          if (!cancelled) setError('Could not load listings. Please try again.')
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false)
+        })
+    }, 250)
 
-    return list
+    return () => {
+      cancelled = true
+      clearTimeout(timeout)
+    }
   }, [search, category, district, minPrice, maxPrice, sort])
+
+  const districts = useMemo(() => [...UGANDA_MAIZE_DISTRICTS].sort(), [])
 
   function clearFilters() {
     setCategory('all')
@@ -114,7 +123,7 @@ export default function MarketplacePage() {
             className="h-11 rounded-md border border-outline-variant bg-surface px-3.5 text-sm text-on-surface outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
           >
             <option value="all">All districts</option>
-            {DISTRICTS.map((d) => (
+            {districts.map((d) => (
               <option key={d} value={d}>
                 {d}
               </option>
@@ -159,27 +168,35 @@ export default function MarketplacePage() {
         )}
       </div>
 
-      <p className="mt-4 text-sm text-on-surface-variant">{products.length} listings found</p>
-
-      {products.length === 0 ? (
-        <EmptyState
-          icon={PackageSearch}
-          title="No listings match your search"
-          description="Try a different keyword, district, price range or category."
-          action={
-            hasActiveFilters ? (
-              <Button variant="outlined" onClick={clearFilters}>
-                Clear filters
-              </Button>
-            ) : undefined
-          }
-        />
+      {loading ? (
+        <InlineSpinner label="Loading listings…" />
+      ) : error ? (
+        <EmptyState icon={PackageSearch} title="Something went wrong" description={error} />
       ) : (
-        <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+        <>
+          <p className="mt-4 text-sm text-on-surface-variant">{products.length} listings found</p>
+
+          {products.length === 0 ? (
+            <EmptyState
+              icon={PackageSearch}
+              title="No listings match your search"
+              description="Try a different keyword, district, price range or category."
+              action={
+                hasActiveFilters ? (
+                  <Button variant="outlined" onClick={clearFilters}>
+                    Clear filters
+                  </Button>
+                ) : undefined
+              }
+            />
+          ) : (
+            <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {products.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </DashboardLayout>
   )

@@ -1,50 +1,47 @@
-import { MOCK_PASSWORD, MOCK_USERS } from '@/mocks/users'
+import { api, ApiError, setToken } from '@/lib/apiClient'
 import type { AuthCredentials, RegisterPayload, User } from '@/types/user'
-
-const NETWORK_DELAY_MS = 650
-
-function delay<T>(value: T, ms = NETWORK_DELAY_MS): Promise<T> {
-  return new Promise((resolve) => setTimeout(() => resolve(value), ms))
-}
 
 export class AuthError extends Error {}
 
-/** In-memory store standing in for a real backend during frontend development. */
-const registeredUsers: User[] = [...MOCK_USERS]
+interface AuthResponse {
+  token: string
+  user: User
+}
+
+function toAuthError(err: unknown): AuthError {
+  if (err instanceof ApiError) return new AuthError(err.message)
+  return new AuthError('Something went wrong. Please try again.')
+}
 
 export async function login({ phone, password }: AuthCredentials): Promise<User> {
-  const user = registeredUsers.find((u) => u.phone === phone)
-  if (!user || password !== MOCK_PASSWORD) {
-    await delay(null, 500)
-    throw new AuthError('Invalid phone number or password.')
+  try {
+    const { token, user } = await api.post<AuthResponse>('/auth/login', { phone, password })
+    setToken(token)
+    return user
+  } catch (err) {
+    throw toAuthError(err)
   }
-  return delay(user)
 }
 
 export async function register(payload: RegisterPayload): Promise<User> {
-  if (registeredUsers.some((u) => u.phone === payload.phone)) {
-    await delay(null, 500)
-    throw new AuthError('An account with this phone number already exists.')
+  try {
+    const { token, user } = await api.post<AuthResponse>('/auth/register', payload)
+    setToken(token)
+    return user
+  } catch (err) {
+    throw toAuthError(err)
   }
-  const user: User = {
-    id: `usr-${payload.role}-${Date.now()}`,
-    fullName: payload.fullName,
-    phone: payload.phone,
-    role: payload.role,
-    district: payload.district,
-    subscriptionTier: 'free',
-    verified: false,
-    createdAt: new Date().toISOString(),
-  }
-  registeredUsers.push(user)
-  return delay(user)
 }
 
 export async function requestPasswordReset(phone: string): Promise<{ sent: boolean }> {
-  const exists = registeredUsers.some((u) => u.phone === phone)
-  if (!exists) {
-    await delay(null, 500)
-    throw new AuthError('No account found for this phone number.')
+  try {
+    return await api.post<{ sent: boolean }>('/auth/password-reset', { phone })
+  } catch (err) {
+    throw toAuthError(err)
   }
-  return delay({ sent: true })
+}
+
+export async function fetchCurrentUser(): Promise<User> {
+  const { user } = await api.get<{ user: User }>('/auth/me')
+  return user
 }

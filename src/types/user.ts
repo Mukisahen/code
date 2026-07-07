@@ -10,6 +10,7 @@ export interface User {
   avatarUrl?: string
   subscriptionTier: 'free' | 'premium'
   verified: boolean
+  status?: 'active' | 'suspended' | 'pending'
   createdAt: string
 }
 

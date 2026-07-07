@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Store, ClipboardList, MessageCircle, TrendingUp, Heart, PackageCheck } from 'lucide-react'
 import { DashboardLayout } from '@/layouts/DashboardLayout'
@@ -10,10 +11,11 @@ import { PromoBanner } from '@/components/common/PromoBanner'
 import { useAuth } from '@/hooks/useAuth'
 import { useLivePrices } from '@/hooks/useLivePrices'
 import { ROUTES } from '@/constants/routes'
-import { MOCK_BUYER_REQUESTS, MOCK_ORDERS } from '@/mocks/orders'
-import { MOCK_MARKET_PRICES } from '@/mocks/marketPrices'
-import { MOCK_PRODUCTS } from '@/mocks/products'
-import { useFavorites } from '@/hooks/useFavorites'
+import * as marketplaceService from '@/services/marketplaceService'
+import * as marketPricesService from '@/services/marketPricesService'
+import type { BuyerRequest, Order } from '@/types/order'
+import type { Product } from '@/types/product'
+import type { MarketPriceEntry } from '@/types/marketPrice'
 import { formatRelativeTime, formatUGX } from '@/utils/format'
 import { cn } from '@/utils/cn'
 
@@ -32,12 +34,19 @@ const actionTone = {
 
 export default function BuyerDashboardPage() {
   const { user } = useAuth()
-  const { favoriteIds } = useFavorites()
-  const myRequests = MOCK_BUYER_REQUESTS.filter((r) => r.status !== 'closed').slice(0, 3)
-  const recentOrders = MOCK_ORDERS.slice(0, 3)
-  const favoriteProducts = MOCK_PRODUCTS.filter((p) => favoriteIds.includes(p.id))
-  const { prices: livePrices, lastUpdated } = useLivePrices(MOCK_MARKET_PRICES)
+  const [myRequests, setMyRequests] = useState<BuyerRequest[]>([])
+  const [orders, setOrders] = useState<Order[]>([])
+  const [favoriteProducts, setFavoriteProducts] = useState<Product[]>([])
+  const [basePrices, setBasePrices] = useState<MarketPriceEntry[]>([])
+  const { prices: livePrices, lastUpdated } = useLivePrices(basePrices)
   const topPrices = livePrices.slice(0, 3)
+
+  useEffect(() => {
+    marketplaceService.getMyBuyerRequests().then((requests) => setMyRequests(requests.filter((r) => r.status !== 'closed').slice(0, 3)))
+    marketplaceService.getMyOrders().then((result) => setOrders(result.slice(0, 3)))
+    marketplaceService.listFavorites().then(setFavoriteProducts)
+    marketPricesService.listMarketPrices().then(setBasePrices)
+  }, [])
 
   return (
     <DashboardLayout title="Buyer Dashboard" subtitle={`Welcome back, ${user?.fullName}`}>
@@ -60,7 +69,7 @@ export default function BuyerDashboardPage() {
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatTile icon={ClipboardList} label="Open requests" value={String(myRequests.length)} tone="primary" />
-        <StatTile icon={PackageCheck} label="Orders completed" value={String(MOCK_ORDERS.filter((o) => o.status === 'completed').length)} tone="secondary" />
+        <StatTile icon={PackageCheck} label="Orders completed" value={String(orders.filter((o) => o.status === 'completed').length)} tone="secondary" />
         <StatTile icon={Heart} label="Favourite listings" value={String(favoriteProducts.length)} tone="tertiary" />
       </div>
 
@@ -102,7 +111,7 @@ export default function BuyerDashboardPage() {
         <Card>
           <SectionHeader title="Recent orders" seeAllHref={ROUTES.orderHistory} />
           <div className="divide-y divide-outline-variant/60">
-            {recentOrders.map((order) => (
+            {orders.map((order) => (
               <div key={order.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0 text-sm">
                 <div>
                   <p className="font-semibold text-on-surface">{order.productTitle}</p>

@@ -1,59 +1,93 @@
-import { useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { ArrowLeft, Send, MessageCircle, Users, MapPin } from 'lucide-react'
 import { DashboardLayout } from '@/layouts/DashboardLayout'
 import { Avatar } from '@/components/common/Avatar'
 import { Button } from '@/components/common/Button'
 import { EmptyState } from '@/components/common/EmptyState'
-import { MOCK_CONVERSATIONS, MOCK_MESSAGES } from '@/mocks/messages'
-import { MOCK_COMMUNITY_FARMERS } from '@/mocks/communityFarmers'
+import { InlineSpinner } from '@/components/common/InlineSpinner'
+import * as messagesService from '@/services/messagesService'
+import type { CommunityFarmer } from '@/services/messagesService'
 import type { ChatMessage, Conversation } from '@/types/message'
 import { formatRelativeTime } from '@/utils/format'
 import { cn } from '@/utils/cn'
 
 type Panel = 'chats' | 'community'
+const POLL_MS = 4000
 
 export default function MessagesPage() {
   const [panel, setPanel] = useState<Panel>('chats')
-  const [conversations, setConversations] = useState<Conversation[]>(MOCK_CONVERSATIONS)
-  const [messages, setMessages] = useState<ChatMessage[]>(MOCK_MESSAGES)
+  const [conversations, setConversations] = useState<Conversation[]>([])
+  const [conversationsLoading, setConversationsLoading] = useState(true)
+  const [farmers, setFarmers] = useState<CommunityFarmer[]>([])
+  const [messages, setMessages] = useState<ChatMessage[]>([])
   const [activeId, setActiveId] = useState<string | null>(null)
   const [draft, setDraft] = useState('')
+  const activeIdRef = useRef<string | null>(null)
 
   const active = conversations.find((c) => c.id === activeId)
-  const threadMessages = messages.filter((m) => m.conversationId === activeId)
-  const onlineCount = MOCK_COMMUNITY_FARMERS.filter((f) => f.online).length
+  const onlineCount = farmers.filter((f) => f.online).length
 
-  function handleSend(event: FormEvent) {
-    event.preventDefault()
-    if (!draft.trim() || !activeId) return
-    setMessages((prev) => [
-      ...prev,
-      { id: `m-${Date.now()}`, conversationId: activeId, senderId: 'me', text: draft, sentAt: new Date().toISOString() },
-    ])
-    setConversations((prev) =>
-      prev.map((c) => (c.id === activeId ? { ...c, lastMessage: draft, lastMessageAt: new Date().toISOString() } : c)),
-    )
-    setDraft('')
-  }
+  const refreshConversations = useCallback(() => {
+    messagesService.listConversations().then(setConversations).catch(() => {})
+  }, [])
 
-  function startConversationWith(farmerId: string, name: string, initials: string) {
-    const existing = conversations.find((c) => c.id === `farmer-${farmerId}`)
-    if (existing) {
-      setActiveId(existing.id)
-      setPanel('chats')
+  useEffect(() => {
+    messagesService
+      .listConversations()
+      .then(setConversations)
+      .finally(() => setConversationsLoading(false))
+  }, [])
+
+  useEffect(() => {
+    const interval = setInterval(refreshConversations, POLL_MS * 2)
+    return () => clearInterval(interval)
+  }, [refreshConversations])
+
+  useEffect(() => {
+    messagesService.getCommunity().then(({ farmers }) => setFarmers(farmers))
+  }, [])
+
+  useEffect(() => {
+    activeIdRef.current = activeId
+    if (!activeId) {
+      setMessages([])
       return
     }
-    const newConversation: Conversation = {
-      id: `farmer-${farmerId}`,
-      participantName: name,
-      participantInitials: initials,
-      participantRole: 'farmer',
-      lastMessage: 'Say hello to start the conversation.',
-      lastMessageAt: new Date().toISOString(),
-      unreadCount: 0,
+
+    let cancelled = false
+    messagesService.getMessages(activeId).then((result) => {
+      if (!cancelled) setMessages(result)
+    })
+
+    const interval = setInterval(() => {
+      messagesService.getMessages(activeId).then((result) => {
+        if (!cancelled && activeIdRef.current === activeId) setMessages(result)
+      })
+    }, POLL_MS)
+
+    return () => {
+      cancelled = true
+      clearInterval(interval)
     }
-    setConversations((prev) => [newConversation, ...prev])
-    setActiveId(newConversation.id)
+  }, [activeId])
+
+  async function handleSend(event: FormEvent) {
+    event.preventDefault()
+    if (!draft.trim() || !activeId) return
+    const text = draft
+    setDraft('')
+
+    const sent = await messagesService.sendMessage(activeId, text)
+    setMessages((prev) => [...prev, sent])
+    setConversations((prev) =>
+      prev.map((c) => (c.id === activeId ? { ...c, lastMessage: text, lastMessageAt: sent.sentAt } : c)),
+    )
+  }
+
+  async function startConversationWith(farmerId: string) {
+    const conversationId = await messagesService.startDirectConversation(farmerId)
+    await refreshConversations()
+    setActiveId(conversationId)
     setPanel('chats')
   }
 
@@ -89,7 +123,9 @@ export default function MessagesPage() {
 
           <div className="flex-1 overflow-y-auto">
             {panel === 'chats' ? (
-              conversations.length === 0 ? (
+              conversationsLoading ? (
+                <InlineSpinner label="Loading conversations…" />
+              ) : conversations.length === 0 ? (
                 <EmptyState icon={MessageCircle} title="No conversations yet" />
               ) : (
                 conversations.map((c) => (
@@ -127,7 +163,7 @@ export default function MessagesPage() {
                 <p className="flex items-center gap-1.5 px-4 pt-3 text-xs text-on-surface-variant">
                   <Users className="size-3.5" /> Farmers you can message directly
                 </p>
-                {MOCK_COMMUNITY_FARMERS.map((f) => (
+                {farmers.map((f) => (
                   <div key={f.id} className="flex items-center gap-3 p-4">
                     <div className="relative">
                       <Avatar initials={f.initials} />
@@ -138,10 +174,10 @@ export default function MessagesPage() {
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-semibold text-on-surface">{f.name}</p>
                       <p className="flex items-center gap-1 truncate text-xs text-on-surface-variant">
-                        <MapPin className="size-3" /> {f.district} &middot; {f.focus}
+                        <MapPin className="size-3" /> {f.district}
                       </p>
                     </div>
-                    <Button size="sm" variant="outlined" onClick={() => startConversationWith(f.id, f.name, f.initials)}>
+                    <Button size="sm" variant="outlined" onClick={() => startConversationWith(f.id)}>
                       Message
                     </Button>
                   </div>
@@ -167,12 +203,12 @@ export default function MessagesPage() {
               </div>
 
               <div className="flex-1 space-y-3 overflow-y-auto p-4">
-                {threadMessages.length === 0 ? (
+                {messages.length === 0 ? (
                   <p className="pt-8 text-center text-sm text-on-surface-variant">
                     Say hello to {active.participantName.split(' ')[0]} to start the conversation.
                   </p>
                 ) : (
-                  threadMessages.map((m) => (
+                  messages.map((m) => (
                     <div key={m.id} className={cn('flex', m.senderId === 'me' ? 'justify-end' : 'justify-start')}>
                       <div
                         className={cn(

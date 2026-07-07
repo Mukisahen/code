@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Store, FileBarChart, Factory, Package, Truck } from 'lucide-react'
 import { DashboardLayout } from '@/layouts/DashboardLayout'
@@ -9,7 +10,8 @@ import { BarChart } from '@/components/charts/BarChart'
 import { PromoBanner } from '@/components/common/PromoBanner'
 import { useAuth } from '@/hooks/useAuth'
 import { ROUTES } from '@/constants/routes'
-import { MOCK_ORDERS, MOCK_BUYER_REQUESTS } from '@/mocks/orders'
+import * as marketplaceService from '@/services/marketplaceService'
+import type { BuyerRequest, Order } from '@/types/order'
 import { formatUGX } from '@/utils/format'
 import { cn } from '@/utils/cn'
 
@@ -35,9 +37,14 @@ const SUPPLY_BY_CATEGORY = [
 
 export default function ProcessorDashboardPage() {
   const { user } = useAuth()
-  const requests = MOCK_BUYER_REQUESTS.slice(0, 3)
-  const orders = MOCK_ORDERS.slice(0, 3)
+  const [requests, setRequests] = useState<BuyerRequest[]>([])
+  const [orders, setOrders] = useState<Order[]>([])
   const totalSourced = SUPPLY_BY_CATEGORY.reduce((sum, s) => sum + s.value, 0)
+
+  useEffect(() => {
+    marketplaceService.getMyBuyerRequests().then((result) => setRequests(result.slice(0, 3)))
+    marketplaceService.getMyOrders().then((result) => setOrders(result.slice(0, 3)))
+  }, [])
 
   return (
     <DashboardLayout title="Processor Dashboard" subtitle={`Welcome back, ${user?.fullName}`}>

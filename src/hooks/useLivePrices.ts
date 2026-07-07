@@ -10,6 +10,11 @@ export function useLivePrices(initial: MarketPriceEntry[]) {
   const initialRef = useRef(initial)
 
   useEffect(() => {
+    initialRef.current = initial
+    setPrices(initial)
+  }, [initial])
+
+  useEffect(() => {
     const id = setInterval(() => {
       setPrices((prev) =>
         prev.map((entry) => {

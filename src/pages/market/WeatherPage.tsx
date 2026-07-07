@@ -1,10 +1,12 @@
-import { useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { Sun, Cloud, CloudRain, CloudDrizzle, Droplets, Wind, Info } from 'lucide-react'
 import { DashboardLayout } from '@/layouts/DashboardLayout'
 import { Card } from '@/components/common/Card'
-import { getWeatherForDistrict } from '@/mocks/weather'
+import { InlineSpinner } from '@/components/common/InlineSpinner'
+import { EmptyState } from '@/components/common/EmptyState'
+import * as weatherService from '@/services/weatherService'
 import { useAuth } from '@/hooks/useAuth'
-import type { WeatherCondition } from '@/types/weather'
+import type { WeatherCondition, WeatherSnapshot } from '@/types/weather'
 
 const WEATHER_ICONS: Record<WeatherCondition, typeof Sun> = {
   sunny: Sun,
@@ -16,7 +18,37 @@ const WEATHER_ICONS: Record<WeatherCondition, typeof Sun> = {
 
 export default function WeatherPage() {
   const { user } = useAuth()
-  const weather = useMemo(() => getWeatherForDistrict(user?.district ?? 'Masindi'), [user?.district])
+  const [weather, setWeather] = useState<WeatherSnapshot | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
+
+  useEffect(() => {
+    const district = user?.district ?? 'Masindi'
+    setLoading(true)
+    setError(false)
+    weatherService
+      .getWeather(district)
+      .then(setWeather)
+      .catch(() => setError(true))
+      .finally(() => setLoading(false))
+  }, [user?.district])
+
+  if (loading) {
+    return (
+      <DashboardLayout title="Weather">
+        <InlineSpinner label="Loading forecast…" />
+      </DashboardLayout>
+    )
+  }
+
+  if (error || !weather) {
+    return (
+      <DashboardLayout title="Weather">
+        <EmptyState icon={Info} title="Could not load weather" description="Please check your connection and try again." />
+      </DashboardLayout>
+    )
+  }
+
   const CurrentIcon = WEATHER_ICONS[weather.condition]
 
   return (
