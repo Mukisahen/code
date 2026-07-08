@@ -97,8 +97,11 @@ conversationsRouter.get(
       update: {},
     })
 
-    const farmers = await prisma.user.findMany({
-      where: { role: 'farmer' },
+    // Every non-admin role is discoverable here so farmers, buyers, and
+    // processors can all find and message each other — admins have their own
+    // channel via the support-ticket/feedback flow instead of open chat.
+    const members = await prisma.user.findMany({
+      where: { role: { in: ['farmer', 'buyer', 'processor'] }, id: { not: req.user!.id } },
       orderBy: { fullName: 'asc' },
     })
 
@@ -106,9 +109,10 @@ conversationsRouter.get(
     res.json({
       conversationId: conversation.id,
       unreadCount: participant.unreadCount,
-      farmers: farmers.map((f) => ({
+      members: members.map((f) => ({
         id: f.id,
         name: f.fullName,
+        role: f.role,
         initials: initials(f.fullName),
         district: f.district,
         online: !!f.lastSeenAt && now - f.lastSeenAt.getTime() < ONLINE_WINDOW_MS,

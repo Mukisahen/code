@@ -14,16 +14,17 @@ export async function startDirectConversation(otherUserId: string, productContex
   return conversationId
 }
 
-export interface CommunityFarmer {
+export interface CommunityMember {
   id: string
   name: string
+  role: 'farmer' | 'buyer' | 'processor'
   initials: string
   district: string
   online: boolean
 }
 
-export async function getCommunity(): Promise<{ conversationId: string; farmers: CommunityFarmer[] }> {
-  return api.get<{ conversationId: string; unreadCount: number; farmers: CommunityFarmer[] }>('/conversations/community')
+export async function getCommunity(): Promise<{ conversationId: string; members: CommunityMember[] }> {
+  return api.get<{ conversationId: string; unreadCount: number; members: CommunityMember[] }>('/conversations/community')
 }
 
 export async function getMessages(conversationId: string, since?: string): Promise<ChatMessage[]> {

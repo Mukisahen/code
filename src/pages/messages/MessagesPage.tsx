@@ -6,7 +6,7 @@ import { Button } from '@/components/common/Button'
 import { EmptyState } from '@/components/common/EmptyState'
 import { InlineSpinner } from '@/components/common/InlineSpinner'
 import * as messagesService from '@/services/messagesService'
-import type { CommunityFarmer } from '@/services/messagesService'
+import type { CommunityMember } from '@/services/messagesService'
 import type { ChatMessage, Conversation } from '@/types/message'
 import { formatRelativeTime } from '@/utils/format'
 import { cn } from '@/utils/cn'
@@ -18,14 +18,14 @@ export default function MessagesPage() {
   const [panel, setPanel] = useState<Panel>('chats')
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [conversationsLoading, setConversationsLoading] = useState(true)
-  const [farmers, setFarmers] = useState<CommunityFarmer[]>([])
+  const [members, setMembers] = useState<CommunityMember[]>([])
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [activeId, setActiveId] = useState<string | null>(null)
   const [draft, setDraft] = useState('')
   const activeIdRef = useRef<string | null>(null)
 
   const active = conversations.find((c) => c.id === activeId)
-  const onlineCount = farmers.filter((f) => f.online).length
+  const onlineCount = members.filter((f) => f.online).length
 
   const refreshConversations = useCallback(() => {
     messagesService.listConversations().then(setConversations).catch(() => {})
@@ -44,7 +44,7 @@ export default function MessagesPage() {
   }, [refreshConversations])
 
   useEffect(() => {
-    messagesService.getCommunity().then(({ farmers }) => setFarmers(farmers))
+    messagesService.getCommunity().then(({ members }) => setMembers(members))
   }, [])
 
   useEffect(() => {
@@ -84,8 +84,8 @@ export default function MessagesPage() {
     )
   }
 
-  async function startConversationWith(farmerId: string) {
-    const conversationId = await messagesService.startDirectConversation(farmerId)
+  async function startConversationWith(memberId: string) {
+    const conversationId = await messagesService.startDirectConversation(memberId)
     await refreshConversations()
     setActiveId(conversationId)
     setPanel('chats')
@@ -108,7 +108,7 @@ export default function MessagesPage() {
                     panel === p ? 'bg-surface text-on-surface shadow-elevation-1' : 'text-on-surface-variant',
                   )}
                 >
-                  {p === 'chats' ? 'Chats' : 'Farmer Community'}
+                  {p === 'chats' ? 'Chats' : 'Community'}
                 </button>
               ))}
             </div>
@@ -161,9 +161,9 @@ export default function MessagesPage() {
             ) : (
               <div className="divide-y divide-outline-variant/40">
                 <p className="flex items-center gap-1.5 px-4 pt-3 text-xs text-on-surface-variant">
-                  <Users className="size-3.5" /> Farmers you can message directly
+                  <Users className="size-3.5" /> Farmers, buyers and processors you can message directly
                 </p>
-                {farmers.map((f) => (
+                {members.map((f) => (
                   <div key={f.id} className="flex items-center gap-3 p-4">
                     <div className="relative">
                       <Avatar initials={f.initials} />
@@ -174,7 +174,8 @@ export default function MessagesPage() {
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-semibold text-on-surface">{f.name}</p>
                       <p className="flex items-center gap-1 truncate text-xs text-on-surface-variant">
-                        <MapPin className="size-3" /> {f.district}
+                        <MapPin className="size-3" /> {f.district} &middot;{' '}
+                        <span className="capitalize">{f.role}</span>
                       </p>
                     </div>
                     <Button size="sm" variant="outlined" onClick={() => startConversationWith(f.id)}>
