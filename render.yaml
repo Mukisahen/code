@@ -1,0 +1,55 @@
+databases:
+  - name: farm-bhade-db
+    plan: free
+    databaseName: farmbhade
+    user: farmbhade
+
+services:
+  - type: web
+    name: farm-bhade-api
+    runtime: node
+    plan: free
+    rootDir: server
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: >-
+      sh -c "npx prisma migrate deploy &&
+      (if [ -n \"$SUPER_ADMIN_PHONE\" ]; then npm run create-admin; fi) &&
+      npm run start"
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: farm-bhade-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PORT
+        value: 4000
+      - key: UPLOADS_DIR
+        value: ./uploads
+      - key: CORS_ORIGIN
+        value: https://farm-bhade-pwa.onrender.com
+      - key: PUBLIC_UPLOADS_BASE_URL
+        value: https://farm-bhade-api.onrender.com/uploads
+      # Set these two temporarily to bootstrap the real supreme admin on first
+      # deploy (see server/README.md), then delete them and redeploy — do not
+      # leave a real password sitting in the dashboard long-term.
+      # - key: SUPER_ADMIN_PHONE
+      #   value: "+2567XXXXXXXX"
+      # - key: SUPER_ADMIN_PASSWORD
+      #   value: "a long random password, at least 12 characters"
+
+  - type: web
+    name: farm-bhade-pwa
+    runtime: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://farm-bhade-api.onrender.com/api
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

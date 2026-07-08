@@ -29,6 +29,39 @@ npm run preview  # preview the production build
 npm run lint     # oxlint
 ```
 
+The backend (API + database) lives in [`server/`](./server) — see `server/README.md` for
+running it locally.
+
+## Deploying a free test instance (Render)
+
+`render.yaml` at the repo root is a [Render Blueprint](https://render.com/docs/blueprint-spec)
+that stands up the API, a Postgres database, and the PWA as a static site, all on Render's
+free tier — no credentials need to be shared with anyone to do this:
+
+1. Push this repo to GitHub (already done if you're reading this from the repo).
+2. In the Render dashboard: **New +** → **Blueprint** → connect this repo. Render reads
+   `render.yaml` and provisions all three services.
+3. Once the API service is live, bootstrap the real supreme admin: in the `farm-bhade-api`
+   service's **Environment** tab, temporarily add `SUPER_ADMIN_PHONE` and
+   `SUPER_ADMIN_PASSWORD` (12+ characters), save (triggers a redeploy — the start command
+   runs `npm run create-admin` automatically when these are set), then **delete both vars**
+   and redeploy again so the password doesn't sit in the dashboard long-term.
+4. The PWA is served from `farm-bhade-pwa.onrender.com`, calling the API at
+   `farm-bhade-api.onrender.com`. If either name is taken, update the URLs in
+   `render.yaml`'s `CORS_ORIGIN` / `PUBLIC_UPLOADS_BASE_URL` / `VITE_API_URL` to match
+   whatever Render actually assigns, then redeploy.
+
+**Known limitations of this free-tier setup** (fine for functional testing, not for a
+real multi-day pilot):
+- Render's free web services use an **ephemeral filesystem** — uploaded crop-doctor
+  photos and product images are lost on every redeploy or spin-down, since there's no
+  persistent disk on the free plan. The VPS deployment in `server/README.md` doesn't
+  have this problem.
+- Free services **spin down after inactivity** and take ~30–60s to wake back up on the
+  next request.
+- Render's free Postgres plan has historically had a retention window (it has changed
+  over time) — check current terms in the Render dashboard before relying on it.
+
 ## Project structure
 
 ```
