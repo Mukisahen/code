@@ -10,7 +10,11 @@ services:
     runtime: node
     plan: free
     rootDir: server
-    buildCommand: npm install && npx prisma generate && npm run build
+    # --include=dev is required here: NODE_ENV=production (set below) makes a
+    # plain `npm install` skip devDependencies, which is where typescript,
+    # @types/*, and prisma's CLI live — without this flag tsc fails with
+    # "Cannot find module" on every import.
+    buildCommand: npm install --include=dev && npx prisma generate && npm run build
     startCommand: >-
       sh -c "npx prisma migrate deploy &&
       (if [ -n \"$SUPER_ADMIN_PHONE\" ]; then npm run create-admin; fi) &&
