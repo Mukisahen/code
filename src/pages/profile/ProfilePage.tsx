@@ -1,5 +1,5 @@
 import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
-import { ShieldCheck, MapPin, Phone, Crown, CheckCircle2, Camera } from 'lucide-react'
+import { ShieldCheck, MapPin, Phone, Crown, CheckCircle2, Camera, Settings, LogOut, ChevronRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { DashboardLayout } from '@/layouts/DashboardLayout'
 import { Card } from '@/components/common/Card'
@@ -15,7 +15,7 @@ import { UGANDA_MAIZE_DISTRICTS } from '@/mocks/districts'
 import { formatDate } from '@/utils/format'
 
 export default function ProfilePage() {
-  const { user, updateUser } = useAuth()
+  const { user, updateUser, logout } = useAuth()
   const { pushToast } = useToast()
   const [fullName, setFullName] = useState(user?.fullName ?? '')
   const [district, setDistrict] = useState(user?.district ?? '')
@@ -153,6 +153,21 @@ export default function ProfilePage() {
           </Button>
         </form>
       </Card>
+
+      <Card className="mt-5 p-0">
+        <Link
+          to={ROUTES.settings}
+          className="flex w-full items-center gap-3 px-5 py-4 text-left hover:bg-surface-container"
+        >
+          <Settings className="size-4.5 text-on-surface-variant" />
+          <span className="flex-1 text-sm font-semibold text-on-surface">Settings &amp; feedback</span>
+          <ChevronRight className="size-4 text-on-surface-variant" />
+        </Link>
+      </Card>
+
+      <Button variant="outlined" fullWidth leadingIcon={<LogOut className="size-4.5" />} onClick={logout} className="mt-5">
+        Log out
+      </Button>
     </DashboardLayout>
   )
 }
