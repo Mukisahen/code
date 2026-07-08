@@ -13,10 +13,14 @@ if (jwtSecret.length < 32) {
   throw new Error('JWT_SECRET must be at least 32 characters — generate one with `openssl rand -base64 48`')
 }
 
-const corsOrigin = process.env.CORS_ORIGIN ?? '*'
-if (isProduction && corsOrigin === '*') {
-  throw new Error('CORS_ORIGIN must be set to your real frontend origin in production, not "*"')
+const rawCorsOrigin = process.env.CORS_ORIGIN ?? '*'
+if (isProduction && rawCorsOrigin === '*') {
+  throw new Error('CORS_ORIGIN must be set to your real frontend origin(s) in production, not "*"')
 }
+// Comma-separated so the same deployment can serve both the web PWA (its own
+// https:// origin) and the Capacitor Android app, which makes requests from
+// an internal WebView origin (https://localhost by default), not the PWA's URL.
+const corsOrigin = rawCorsOrigin === '*' ? '*' : rawCorsOrigin.split(',').map((o) => o.trim())
 
 export const env = {
   isProduction,
