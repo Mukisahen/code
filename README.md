@@ -4,9 +4,9 @@ Farm Bhade is an AI-powered digital maize ecosystem for Uganda, guiding farmers 
 planning through growing, harvesting, storage, selling and processing — with a
 trusted marketplace, AI Crop Doctor, live market prices and weather forecasts.
 
-This repository contains the **frontend only** — a production-ready Progressive
-Web App built with React, TypeScript and Tailwind CSS. Backend integration is
-mocked and designed to be swapped in later without restructuring the app.
+The frontend is a Progressive Web App built with React, TypeScript and Tailwind
+CSS, backed by a real Node/Express/Prisma API (see [`server/`](./server)). It's
+also packaged as a sideloadable Android APK via Capacitor — see below.
 
 ## Tech stack
 
@@ -61,6 +61,30 @@ real multi-day pilot):
   next request.
 - Render's free Postgres plan has historically had a retention window (it has changed
   over time) — check current terms in the Render dashboard before relying on it.
+
+## Sideloadable Android APK
+
+The PWA is wrapped as a native Android app with [Capacitor](https://capacitorjs.com)
+(the `android/` project here) — a real app shell that bundles the built frontend and
+talks to the same API, not a Play-Store-only package. The actual APK is compiled by
+[`.github/workflows/build-apk.yml`](./.github/workflows/build-apk.yml) on GitHub's own
+runners, since building an Android app needs the Android SDK.
+
+**To get the APK:** push to `claude/farm-bhade-pwa-frontend-x4ejjk` (or run the workflow
+manually from the **Actions** tab → *Build Android APK* → **Run workflow**), wait for it
+to finish, then open the run and download the `farm-bhade-debug-apk` artifact — it's a
+zip containing `app-debug.apk`.
+
+**To install it on a phone:** transfer the APK to the device (a chat app, cloud drive,
+or USB works), tap it, and allow "install from this source" when Android asks — this is
+what "sideloading" means, no Play Store involved. It's debug-signed, which is normal for
+pilot testing and does not affect functionality; it just means it can't be published to
+the Play Store as-is.
+
+The API it points to is whatever `VITE_API_URL` is set to in
+[`.env.production`](./.env.production) at build time (currently the Render deployment
+above) — update that file and re-run the workflow to point the app at a different
+backend (e.g. a VPS deployment).
 
 ## Project structure
 
