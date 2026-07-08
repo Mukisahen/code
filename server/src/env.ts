@@ -30,4 +30,8 @@ export const env = {
   uploadsDir: process.env.UPLOADS_DIR ?? './uploads',
   publicUploadsBaseUrl: process.env.PUBLIC_UPLOADS_BASE_URL ?? 'http://localhost:4000/uploads',
   corsOrigin,
+  // Optional: without this, automatic market-price updates are simply
+  // skipped and admin-entered prices remain the only source — see
+  // lib/marketPriceFeed.ts.
+  alphaVantageApiKey: process.env.ALPHA_VANTAGE_API_KEY,
 }

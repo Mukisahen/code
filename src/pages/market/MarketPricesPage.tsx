@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { TrendingUp } from 'lucide-react'
 import { DashboardLayout } from '@/layouts/DashboardLayout'
 import { Card } from '@/components/common/Card'
+import { Badge } from '@/components/common/Badge'
 import { Sparkline } from '@/components/charts/Sparkline'
 import { LiveBadge } from '@/components/common/LiveBadge'
 import { InlineSpinner } from '@/components/common/InlineSpinner'
@@ -88,6 +89,7 @@ export default function MarketPricesPage() {
               <th className="px-4 py-3">Category</th>
               <th className="px-4 py-3 text-right">Price (UGX/kg)</th>
               <th className="px-4 py-3 text-right">Change</th>
+              <th className="px-4 py-3">Source</th>
             </tr>
           </thead>
           <tbody>
@@ -106,6 +108,15 @@ export default function MarketPricesPage() {
                 >
                   {price.changePercent >= 0 ? '+' : ''}
                   {price.changePercent}%
+                </td>
+                <td className="px-4 py-3">
+                  {price.source === 'live' ? (
+                    <Badge tone="success">Live feed</Badge>
+                  ) : price.updatedByName ? (
+                    <Badge tone="neutral">{price.updatedByName}</Badge>
+                  ) : (
+                    <span className="text-xs text-on-surface-variant">—</span>
+                  )}
                 </td>
               </tr>
             ))}

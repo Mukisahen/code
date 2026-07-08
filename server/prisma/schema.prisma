@@ -290,6 +290,7 @@ model MarketPriceEntry {
   pricePerKg    Int
   changePercent Float
   updatedAt     DateTime @default(now())
+  source        String?  // "admin" | "live" (global commodity feed) | null for unedited seed data
 
   updatedById String?
   updatedBy   User?   @relation(fields: [updatedById], references: [id], onDelete: SetNull)

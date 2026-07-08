@@ -4,5 +4,7 @@ export interface MarketPriceEntry {
   category: string
   pricePerKg: number
   changePercent: number
+  source?: 'admin' | 'live'
+  updatedByName?: string
   updatedAt: string
 }

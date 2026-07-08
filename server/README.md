@@ -14,6 +14,8 @@ curated diagnosis), market prices, real weather (Open-Meteo), and the admin back
 - **Uploads**: Multer (memory) → Sharp (resize/compress) → local disk, served statically
 - **Validation**: Zod
 - **Weather**: [Open-Meteo](https://open-meteo.com) (free, no API key), cached 1 hour per district
+- **Market prices**: admin-entered, plus an optional automatic daily nudge from a global
+  commodity feed — see "Automatic market prices" below
 
 ## Local development
 
@@ -121,6 +123,24 @@ the only account that can promote another user to `admin` or revoke an
 existing admin's access. Admins promoted this way get every other admin
 capability but not `isSuperAdmin`, so they cannot manage other admins or act
 on the supreme admin's account (change its status, suspend it, revoke it).
+
+## Automatic market prices
+
+There's no free API for real-time, hyper-local Uganda maize prices — this doesn't
+exist as a public data source. What's implemented instead is a hybrid: admin-entered
+prices remain the real local baseline (via the Admin Dashboard, unchanged), and if
+`ALPHA_VANTAGE_API_KEY` is set (a free key from
+[alphavantage.co](https://www.alphavantage.co/support/#api-key)), a background job
+(`src/lib/marketPriceFeed.ts`, scheduled in `src/index.ts`) fetches the global corn
+commodity price once a day and nudges every existing district/category price by that
+same month-over-month percentage change — reflecting real market movement without
+replacing local prices with a mismatched global figure. Each price's `source` field
+(`"admin"` or `"live"`) is shown in the Market Prices page so it's clear which is which.
+
+Without the key, this is a complete no-op — prices stay exactly as admins enter them,
+logged once at startup as `{ skipped: '...' }`. The fetch is wrapped so a network
+failure, missing key, or unexpected API response never crashes the server; it's
+treated identically to "no update this run."
 
 ## Known limitations (pilot scope)
 

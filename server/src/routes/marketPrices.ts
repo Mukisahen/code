@@ -9,7 +9,7 @@ export const marketPricesRouter = Router()
 marketPricesRouter.get(
   '/',
   asyncHandler(async (_req, res) => {
-    const prices = await prisma.marketPriceEntry.findMany({ orderBy: { district: 'asc' } })
+    const prices = await prisma.marketPriceEntry.findMany({ orderBy: { district: 'asc' }, include: { updatedBy: true } })
     res.json({
       prices: prices.map((p) => ({
         id: p.id,
@@ -17,6 +17,8 @@ marketPricesRouter.get(
         category: p.category,
         pricePerKg: p.pricePerKg,
         changePercent: p.changePercent,
+        source: p.source ?? undefined,
+        updatedByName: p.updatedBy?.fullName,
         updatedAt: p.updatedAt.toISOString(),
       })),
     })
@@ -60,8 +62,8 @@ marketPricesRouter.post(
 
     const entry = await prisma.marketPriceEntry.upsert({
       where: { district_category: { district: payload.district, category: payload.category } },
-      create: { ...payload, changePercent, updatedById: req.user!.id },
-      update: { pricePerKg: payload.pricePerKg, changePercent, updatedById: req.user!.id, updatedAt: new Date() },
+      create: { ...payload, changePercent, source: 'admin', updatedById: req.user!.id },
+      update: { pricePerKg: payload.pricePerKg, changePercent, source: 'admin', updatedById: req.user!.id, updatedAt: new Date() },
     })
 
     await prisma.marketPriceHistory.create({
@@ -75,6 +77,8 @@ marketPricesRouter.post(
         category: entry.category,
         pricePerKg: entry.pricePerKg,
         changePercent: entry.changePercent,
+        source: entry.source ?? undefined,
+        updatedByName: req.user!.fullName,
         updatedAt: entry.updatedAt.toISOString(),
       },
     })
