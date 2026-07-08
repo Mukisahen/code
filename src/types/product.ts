@@ -17,6 +17,7 @@ export interface Seller {
   verified: boolean
   phone: string
   avatarInitials: string
+  avatarUrl?: string
   memberSince: string
 }
 

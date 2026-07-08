@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from 'react'
-import { ShieldCheck, MapPin, Phone, Crown, CheckCircle2 } from 'lucide-react'
+import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
+import { ShieldCheck, MapPin, Phone, Crown, CheckCircle2, Camera } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { DashboardLayout } from '@/layouts/DashboardLayout'
 import { Card } from '@/components/common/Card'
@@ -8,16 +8,21 @@ import { Badge } from '@/components/common/Badge'
 import { Input } from '@/components/common/Input'
 import { Button } from '@/components/common/Button'
 import { useAuth } from '@/hooks/useAuth'
+import { useToast } from '@/hooks/useToast'
+import * as usersService from '@/services/usersService'
 import { ROUTES } from '@/constants/routes'
 import { UGANDA_MAIZE_DISTRICTS } from '@/mocks/districts'
 import { formatDate } from '@/utils/format'
 
 export default function ProfilePage() {
-  const { user } = useAuth()
+  const { user, updateUser } = useAuth()
+  const { pushToast } = useToast()
   const [fullName, setFullName] = useState(user?.fullName ?? '')
-  const [phone, setPhone] = useState(user?.phone ?? '')
   const [district, setDistrict] = useState(user?.district ?? '')
   const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const avatarInputRef = useRef<HTMLInputElement>(null)
 
   if (!user) return null
 
@@ -28,16 +33,60 @@ export default function ProfilePage() {
     .slice(0, 2)
     .toUpperCase()
 
-  function handleSave(event: FormEvent) {
+  async function handleSave(event: FormEvent) {
     event.preventDefault()
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2500)
+    setSaving(true)
+    try {
+      const updated = await usersService.updateProfile({ fullName: fullName.trim(), district })
+      updateUser(updated)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2500)
+    } catch {
+      pushToast({ type: 'system', title: 'Could not save changes', description: 'Please try again in a moment.' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleAvatarChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+
+    setUploadingAvatar(true)
+    try {
+      const updated = await usersService.uploadAvatar(file)
+      updateUser(updated)
+      pushToast({ type: 'system', title: 'Profile photo updated', description: 'Your new photo is now visible to others.' })
+    } catch {
+      pushToast({ type: 'system', title: 'Could not upload photo', description: 'Please try a different photo.' })
+    } finally {
+      setUploadingAvatar(false)
+    }
   }
 
   return (
     <DashboardLayout title="Profile" subtitle="Manage your personal information">
       <Card className="mb-5 flex flex-col items-center gap-3 text-center sm:flex-row sm:text-left">
-        <Avatar initials={initials} size="lg" />
+        <div className="relative shrink-0">
+          <Avatar initials={initials} imageUrl={user.avatarUrl} size="lg" />
+          <button
+            type="button"
+            onClick={() => avatarInputRef.current?.click()}
+            disabled={uploadingAvatar}
+            aria-label="Change profile photo"
+            className="absolute -right-1 -bottom-1 flex size-6 items-center justify-center rounded-full border-2 border-surface bg-primary text-on-primary shadow-elevation-1 disabled:opacity-60"
+          >
+            <Camera className="size-3.5" />
+          </button>
+          <input
+            ref={avatarInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleAvatarChange}
+          />
+        </div>
         <div className="flex-1">
           <p className="flex items-center justify-center gap-1.5 text-lg font-bold text-on-surface sm:justify-start">
             {user.fullName}
@@ -73,8 +122,8 @@ export default function ProfilePage() {
       <Card>
         <h2 className="mb-4 font-bold text-on-surface">Personal information</h2>
         <form onSubmit={handleSave} className="flex flex-col gap-4">
-          <Input label="Full name" value={fullName} onChange={(e) => setFullName(e.target.value)} />
-          <Input label="Phone number" value={phone} onChange={(e) => setPhone(e.target.value)} />
+          <Input label="Full name" value={fullName} onChange={(e) => setFullName(e.target.value)} required minLength={2} />
+          <Input label="Phone number" value={user.phone} disabled helperText="Your phone number can't be changed." />
           <div>
             <label htmlFor="profile-district" className="mb-1.5 block text-sm font-medium text-on-surface-variant">
               District
@@ -99,7 +148,7 @@ export default function ProfilePage() {
             </div>
           )}
 
-          <Button type="submit" className="sm:w-fit">
+          <Button type="submit" loading={saving} className="sm:w-fit">
             Save changes
           </Button>
         </form>

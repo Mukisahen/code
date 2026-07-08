@@ -137,7 +137,7 @@ export default function MessagesPage() {
                       activeId === c.id && 'bg-surface-container',
                     )}
                   >
-                    <Avatar initials={c.participantInitials} />
+                    <Avatar initials={c.participantInitials} imageUrl={c.participantAvatarUrl} />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
                         <p className="truncate font-semibold text-on-surface">{c.participantName}</p>
@@ -166,7 +166,7 @@ export default function MessagesPage() {
                 {members.map((f) => (
                   <div key={f.id} className="flex items-center gap-3 p-4">
                     <div className="relative">
-                      <Avatar initials={f.initials} />
+                      <Avatar initials={f.initials} imageUrl={f.avatarUrl} />
                       {f.online && (
                         <span className="absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full border-2 border-surface bg-primary" />
                       )}
@@ -196,7 +196,7 @@ export default function MessagesPage() {
                 <button onClick={() => setActiveId(null)} className="lg:hidden" aria-label="Back">
                   <ArrowLeft className="size-5 text-on-surface-variant" />
                 </button>
-                <Avatar initials={active.participantInitials} size="sm" />
+                <Avatar initials={active.participantInitials} imageUrl={active.participantAvatarUrl} size="sm" />
                 <div>
                   <p className="font-semibold text-on-surface">{active.participantName}</p>
                   {active.productContext && <p className="text-xs text-on-surface-variant">{active.productContext}</p>}

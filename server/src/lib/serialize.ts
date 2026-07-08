@@ -37,6 +37,7 @@ export function toSellerView(user: User) {
     verified: user.verified,
     phone: user.phone,
     avatarInitials: initials(user.fullName),
+    avatarUrl: user.avatarUrl ?? undefined,
     memberSince: user.createdAt.toISOString(),
   }
 }

@@ -2,6 +2,7 @@ import { cn } from '@/utils/cn'
 
 interface AvatarProps {
   initials: string
+  imageUrl?: string
   size?: 'sm' | 'md' | 'lg'
   tone?: 'primary' | 'secondary'
   className?: string
@@ -18,7 +19,17 @@ const toneStyles = {
   secondary: 'bg-secondary-container text-on-secondary-container',
 }
 
-export function Avatar({ initials, size = 'md', tone = 'primary', className }: AvatarProps) {
+export function Avatar({ initials, imageUrl, size = 'md', tone = 'primary', className }: AvatarProps) {
+  if (imageUrl) {
+    return (
+      <img
+        src={imageUrl}
+        alt=""
+        className={cn('inline-block shrink-0 rounded-full object-cover', sizeStyles[size], className)}
+      />
+    )
+  }
+
   return (
     <span
       className={cn(

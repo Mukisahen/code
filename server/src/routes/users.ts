@@ -4,6 +4,8 @@ import { prisma } from '../lib/prisma.js'
 import { toPublicUser } from '../lib/serialize.js'
 import { asyncHandler } from '../middleware/asyncHandler.js'
 import { requireAuth } from '../middleware/auth.js'
+import { imageUpload } from '../middleware/upload.js'
+import { saveUploadedImage } from '../lib/imageStorage.js'
 import { badRequest } from '../lib/httpError.js'
 
 export const usersRouter = Router()
@@ -29,5 +31,22 @@ usersRouter.patch(
     })
 
     res.json({ user: toPublicUser(user) })
+  }),
+)
+
+usersRouter.post(
+  '/me/avatar',
+  imageUpload.single('photo'),
+  asyncHandler(async (req, res) => {
+    if (!req.file) throw badRequest('A photo is required')
+
+    const avatarUrl = await saveUploadedImage(req.file.buffer, 'avatars', 512)
+
+    const user = await prisma.user.update({
+      where: { id: req.user!.id },
+      data: { avatarUrl },
+    })
+
+    res.status(201).json({ user: toPublicUser(user) })
   }),
 )

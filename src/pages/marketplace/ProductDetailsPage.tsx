@@ -190,7 +190,7 @@ export default function ProductDetailsPage() {
         <div className="lg:col-span-1">
           <Card>
             <div className="flex items-center gap-3">
-              <Avatar initials={product.seller.avatarInitials} size="lg" />
+              <Avatar initials={product.seller.avatarInitials} imageUrl={product.seller.avatarUrl} size="lg" />
               <div className="min-w-0">
                 <p className="flex items-center gap-1 truncate font-bold text-on-surface">
                   {product.seller.name}

@@ -19,6 +19,7 @@ export interface CommunityMember {
   name: string
   role: 'farmer' | 'buyer' | 'processor'
   initials: string
+  avatarUrl?: string
   district: string
   online: boolean
 }
