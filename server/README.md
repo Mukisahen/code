@@ -103,6 +103,7 @@ All endpoints are under `/api`. Authenticated endpoints expect `Authorization: B
   `GET/POST /conversations/:id/messages`
 - `GET /notifications`, `PATCH /notifications/:id/read`, `POST /notifications/read-all`
 - `POST /crop-doctor/diagnose` (multipart, field `photo`), `GET /crop-doctor/history`
+- `POST /tickets`, `GET /tickets/mine` (in-app user feedback / support requests)
 - `GET /market-prices`, `GET /market-prices/trend`, `POST /market-prices` (admin)
 - `GET /weather/:district`
 - `GET /districts`

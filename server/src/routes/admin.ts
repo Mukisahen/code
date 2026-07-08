@@ -217,6 +217,7 @@ adminRouter.get(
       tickets: tickets.map((t) => ({
         id: t.id,
         subject: t.subject,
+        message: t.message,
         requester: t.requester.fullName,
         priority: t.priority,
         status: t.status,

@@ -333,17 +333,20 @@ export default function AdminDashboardPage() {
                 <p className="text-sm text-on-surface-variant">No support tickets.</p>
               ) : (
                 tickets.map((t) => (
-                  <Card key={t.id} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <p className="font-semibold text-on-surface">{t.subject}</p>
-                      <p className="text-sm text-on-surface-variant">
-                        {t.requester} &middot; {formatRelativeTime(t.createdAt)}
-                      </p>
+                  <Card key={t.id} className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="font-semibold text-on-surface">{t.subject}</p>
+                        <p className="text-sm text-on-surface-variant">
+                          {t.requester} &middot; {formatRelativeTime(t.createdAt)}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Badge tone={PRIORITY_TONE[t.priority]}>{t.priority} priority</Badge>
+                        <Badge tone={TICKET_STATUS_TONE[t.status]}>{t.status}</Badge>
+                      </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Badge tone={PRIORITY_TONE[t.priority]}>{t.priority} priority</Badge>
-                      <Badge tone={TICKET_STATUS_TONE[t.status]}>{t.status}</Badge>
-                    </div>
+                    {t.message && <p className="text-sm text-on-surface-variant">{t.message}</p>}
                   </Card>
                 ))
               )}

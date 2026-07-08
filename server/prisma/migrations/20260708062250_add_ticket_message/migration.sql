@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "SupportTicket" ADD COLUMN     "message" TEXT NOT NULL DEFAULT '';

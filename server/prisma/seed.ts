@@ -195,9 +195,27 @@ async function main() {
 
   await prisma.supportTicket.createMany({
     data: [
-      { requesterId: buyer.id, subject: 'Payment not reflecting after order', priority: 'high', status: 'open' },
-      { requesterId: farmer.id, subject: 'Cannot upload crop photo', priority: 'medium', status: 'open' },
-      { requesterId: processor.id, subject: 'How do I update my business hours?', priority: 'low', status: 'resolved' },
+      {
+        requesterId: buyer.id,
+        subject: 'Payment not reflecting after order',
+        message: 'I paid for 200kg of green maize from Nakato Grace but my order still shows as pending. Can you check?',
+        priority: 'high',
+        status: 'open',
+      },
+      {
+        requesterId: farmer.id,
+        subject: 'Cannot upload crop photo',
+        message: 'The AI Crop Doctor keeps failing when I try to upload a photo of my maize leaves. It just spins forever.',
+        priority: 'medium',
+        status: 'open',
+      },
+      {
+        requesterId: processor.id,
+        subject: 'How do I update my business hours?',
+        message: 'I want buyers to see when Kigongo Milling Co. is open for deliveries. Where do I set that?',
+        priority: 'low',
+        status: 'resolved',
+      },
     ],
   })
 

@@ -340,6 +340,7 @@ model AuditLogEntry {
 model SupportTicket {
   id        String         @id @default(cuid())
   subject   String
+  message   String         @default("")
   priority  TicketPriority @default(medium)
   status    TicketStatus   @default(open)
   createdAt DateTime       @default(now())

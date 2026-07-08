@@ -31,6 +31,7 @@ export interface AuditLogEntry {
 export interface SupportTicket {
   id: string
   subject: string
+  message: string
   requester: string
   priority: 'low' | 'medium' | 'high'
   status: 'open' | 'in-progress' | 'resolved'

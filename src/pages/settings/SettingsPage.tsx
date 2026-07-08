@@ -1,12 +1,20 @@
-import { useState } from 'react'
-import { Moon, Sun, Globe, Bell, Lock, Trash2, LogOut, ChevronRight } from 'lucide-react'
+import { useEffect, useState, type FormEvent } from 'react'
+import { Moon, Sun, Globe, Bell, Lock, Trash2, LogOut, ChevronRight, MessageSquareText } from 'lucide-react'
 import { DashboardLayout } from '@/layouts/DashboardLayout'
 import { Card } from '@/components/common/Card'
 import { Switch } from '@/components/common/Switch'
 import { Button } from '@/components/common/Button'
+import { Input } from '@/components/common/Input'
+import { Badge } from '@/components/common/Badge'
 import { useTheme } from '@/hooks/useTheme'
 import { useAuth } from '@/hooks/useAuth'
+import { useToast } from '@/hooks/useToast'
+import * as ticketsService from '@/services/ticketsService'
+import type { MyTicket } from '@/types/ticket'
+import { formatRelativeTime } from '@/utils/format'
 import { cn } from '@/utils/cn'
+
+const TICKET_STATUS_TONE = { open: 'error', 'in-progress': 'warning', resolved: 'success' } as const
 
 const LANGUAGES = ['English', 'Luganda', 'Runyankole', 'Ateso']
 
@@ -20,6 +28,7 @@ const NOTIFICATION_PREFS = [
 export default function SettingsPage() {
   const { mode, setMode } = useTheme()
   const { logout } = useAuth()
+  const { pushToast } = useToast()
   const [language, setLanguage] = useState('English')
   const [prefs, setPrefs] = useState<Record<string, boolean>>({
     orders: true,
@@ -27,6 +36,35 @@ export default function SettingsPage() {
     weather: true,
     messages: true,
   })
+
+  const [tickets, setTickets] = useState<MyTicket[]>([])
+  const [subject, setSubject] = useState('')
+  const [message, setMessage] = useState('')
+  const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium')
+  const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    ticketsService.listMyTickets().then(setTickets).catch(() => {})
+  }, [])
+
+  async function handleSubmitFeedback(event: FormEvent) {
+    event.preventDefault()
+    if (!subject.trim() || !message.trim()) return
+
+    setSubmitting(true)
+    try {
+      const ticket = await ticketsService.createTicket({ subject: subject.trim(), message: message.trim(), priority })
+      setTickets((prev) => [ticket, ...prev])
+      setSubject('')
+      setMessage('')
+      setPriority('medium')
+      pushToast({ type: 'system', title: 'Feedback sent', description: 'Thanks — our team will follow up if needed.' })
+    } catch {
+      pushToast({ type: 'system', title: 'Could not send feedback', description: 'Please try again in a moment.' })
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   return (
     <DashboardLayout title="Settings" subtitle="Customize your Farm Bhade experience">
@@ -101,6 +139,68 @@ export default function SettingsPage() {
             <span className="flex-1 text-sm font-semibold text-error">Delete account</span>
             <ChevronRight className="size-4 text-error" />
           </button>
+        </Card>
+
+        <Card>
+          <h2 className="mb-3 flex items-center gap-2 font-bold text-on-surface">
+            <MessageSquareText className="size-4.5" /> Send feedback
+          </h2>
+          <form onSubmit={handleSubmitFeedback} className="flex flex-col gap-3">
+            <Input
+              label="Subject"
+              placeholder="e.g. Photo upload doesn't work"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              required
+            />
+            <div className="w-full text-left">
+              <label htmlFor="feedback-message" className="mb-1.5 block text-sm font-medium text-on-surface-variant">
+                What happened, or what would help?
+              </label>
+              <textarea
+                id="feedback-message"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                required
+                rows={4}
+                placeholder="Tell us what you were doing and what went wrong (or what you'd like to see)…"
+                className="w-full resize-none rounded-md border border-outline-variant bg-surface px-4 py-3 text-sm text-on-surface outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+            <div className="flex items-center gap-3">
+              <label htmlFor="feedback-priority" className="text-sm font-medium text-on-surface-variant">
+                Priority
+              </label>
+              <select
+                id="feedback-priority"
+                value={priority}
+                onChange={(e) => setPriority(e.target.value as typeof priority)}
+                className="h-10 flex-1 rounded-md border border-outline-variant bg-surface px-3 text-sm text-on-surface outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+              >
+                <option value="low">Low — general suggestion</option>
+                <option value="medium">Medium — something's off</option>
+                <option value="high">High — blocking me from using the app</option>
+              </select>
+            </div>
+            <Button type="submit" loading={submitting} disabled={!subject.trim() || !message.trim()}>
+              Send feedback
+            </Button>
+          </form>
+
+          {tickets.length > 0 && (
+            <div className="mt-5 space-y-2 border-t border-outline-variant/60 pt-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-on-surface-variant">Your feedback</p>
+              {tickets.map((t) => (
+                <div key={t.id} className="flex items-start justify-between gap-3 rounded-md bg-surface-container-low px-3 py-2.5">
+                  <div>
+                    <p className="text-sm font-semibold text-on-surface">{t.subject}</p>
+                    <p className="text-xs text-on-surface-variant">{formatRelativeTime(t.createdAt)}</p>
+                  </div>
+                  <Badge tone={TICKET_STATUS_TONE[t.status]}>{t.status}</Badge>
+                </div>
+              ))}
+            </div>
+          )}
         </Card>
 
         <Button variant="outlined" fullWidth leadingIcon={<LogOut className="size-4.5" />} onClick={logout}>
