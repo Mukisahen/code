@@ -17,6 +17,10 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Needed so the release-publishing step below can create/update a
+    # GitHub Release using the default GITHUB_TOKEN.
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -50,4 +54,25 @@ jobs:
         with:
           name: farm-bhade-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
-          retention-days: 30
+          retention-days: 7
+
+      # Workflow artifacts (above) require a GitHub login to download and
+      # get auto-evicted once the account's 500MB Actions storage quota
+      # fills up — after enough builds in one day, that quota fills fast
+      # and starts deleting even recently-built artifacts. A GitHub Release
+      # asset has no such quota, needs no login to download, and this job
+      # updates the same "apk-latest" release every run, so the link below
+      # never changes and always serves the newest build.
+      - name: Publish stable APK download link
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-latest
+          name: Farm Bhade — Latest APK
+          body: |
+            Always the most recent Android build from `claude/farm-bhade-pwa-frontend-x4ejjk`.
+            This link never changes — bookmark it instead of a per-run Actions artifact link.
+
+            Built from commit ${{ github.sha }}.
+          files: android/app/build/outputs/apk/debug/app-debug.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
