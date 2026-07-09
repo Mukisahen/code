@@ -1,9 +1,15 @@
+export type MessageAttachmentType = 'image' | 'file'
+
 export interface ChatMessage {
   id: string
   conversationId: string
   senderId: 'me' | string
   text: string
   sentAt: string
+  attachmentUrl?: string
+  attachmentType?: MessageAttachmentType
+  attachmentName?: string
+  attachmentSize?: number
 }
 
 export interface Conversation {
@@ -12,6 +18,7 @@ export interface Conversation {
   participantInitials: string
   participantAvatarUrl?: string
   participantRole: 'farmer' | 'buyer' | 'processor' | 'admin'
+  participantPhone?: string
   lastMessage: string
   lastMessageAt: string
   unreadCount: number

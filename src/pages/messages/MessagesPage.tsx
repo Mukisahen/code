@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
-import { ArrowLeft, Send, MessageCircle, Users, MapPin, X } from 'lucide-react'
+import { useLocation } from 'react-router-dom'
+import { ArrowLeft, Send, MessageCircle, Users, MapPin, X, Paperclip, Phone, Loader2 } from 'lucide-react'
 import { DashboardLayout } from '@/layouts/DashboardLayout'
 import { Avatar } from '@/components/common/Avatar'
 import { Button } from '@/components/common/Button'
@@ -7,15 +8,19 @@ import { EmptyState } from '@/components/common/EmptyState'
 import { InlineSpinner } from '@/components/common/InlineSpinner'
 import { ChatBubble, parseQuoted } from '@/components/messages/ChatBubble'
 import * as messagesService from '@/services/messagesService'
+import { CHAT_MAX_FILE_SIZE_BYTES } from '@/services/messagesService'
 import type { CommunityMember } from '@/services/messagesService'
 import type { ChatMessage, Conversation } from '@/types/message'
 import { formatRelativeTime } from '@/utils/format'
 import { cn } from '@/utils/cn'
 
+const MAX_FILE_SIZE_LABEL = `${Math.round(CHAT_MAX_FILE_SIZE_BYTES / (1024 * 1024))}MB`
+
 type Panel = 'chats' | 'community'
 const POLL_MS = 4000
 
 export default function MessagesPage() {
+  const location = useLocation()
   const [panel, setPanel] = useState<Panel>('chats')
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [conversationsLoading, setConversationsLoading] = useState(true)
@@ -24,7 +29,10 @@ export default function MessagesPage() {
   const [activeId, setActiveId] = useState<string | null>(null)
   const [draft, setDraft] = useState('')
   const [replyTarget, setReplyTarget] = useState<ChatMessage | null>(null)
+  const [attaching, setAttaching] = useState(false)
+  const [attachError, setAttachError] = useState<string | null>(null)
   const activeIdRef = useRef<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const active = conversations.find((c) => c.id === activeId)
   const onlineCount = members.filter((f) => f.online).length
@@ -48,6 +56,14 @@ export default function MessagesPage() {
   useEffect(() => {
     messagesService.getCommunity().then(({ members }) => setMembers(members))
   }, [])
+
+  useEffect(() => {
+    const state = location.state as { conversationId?: string } | null
+    if (state?.conversationId) {
+      setActiveId(state.conversationId)
+      window.history.replaceState({}, '')
+    }
+  }, [location.state])
 
   useEffect(() => {
     activeIdRef.current = activeId
@@ -91,6 +107,32 @@ export default function MessagesPage() {
     setConversations((prev) =>
       prev.map((c) => (c.id === activeId ? { ...c, lastMessage: preview, lastMessageAt: sent.sentAt } : c)),
     )
+  }
+
+  async function handleFileSelected(file: File | undefined) {
+    if (!file || !activeId) return
+    setAttachError(null)
+
+    if (file.size > CHAT_MAX_FILE_SIZE_BYTES) {
+      setAttachError(`"${file.name}" is too large. Max file size is ${MAX_FILE_SIZE_LABEL}.`)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+      return
+    }
+
+    setAttaching(true)
+    try {
+      const sent = await messagesService.sendAttachment(activeId, file)
+      setMessages((prev) => [...prev, sent])
+      const preview = sent.attachmentType === 'image' ? '📷 Photo' : `📎 ${sent.attachmentName}`
+      setConversations((prev) =>
+        prev.map((c) => (c.id === activeId ? { ...c, lastMessage: preview, lastMessageAt: sent.sentAt } : c)),
+      )
+    } catch {
+      setAttachError('Could not send that file. Please try again.')
+    } finally {
+      setAttaching(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
   }
 
   async function startConversationWith(memberId: string) {
@@ -218,10 +260,21 @@ export default function MessagesPage() {
                   <ArrowLeft className="size-5 text-on-surface-variant" />
                 </button>
                 <Avatar initials={active.participantInitials} imageUrl={active.participantAvatarUrl} size="sm" />
-                <div>
-                  <p className="font-semibold text-on-surface">{active.participantName}</p>
-                  {active.productContext && <p className="text-xs text-on-surface-variant">{active.productContext}</p>}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-semibold text-on-surface">{active.participantName}</p>
+                  {active.productContext && (
+                    <p className="truncate text-xs text-on-surface-variant">{active.productContext}</p>
+                  )}
                 </div>
+                {active.participantPhone && (
+                  <a
+                    href={`tel:${active.participantPhone}`}
+                    aria-label={`Call ${active.participantName}`}
+                    className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-container text-on-primary-container hover:opacity-90"
+                  >
+                    <Phone className="size-4" />
+                  </a>
+                )}
               </div>
 
               <div className="flex-1 space-y-3 overflow-y-auto p-4">
@@ -261,7 +314,29 @@ export default function MessagesPage() {
                 </div>
               )}
 
+              {attachError && (
+                <p role="alert" className="border-t border-outline-variant/60 bg-error-container px-4 py-2 text-xs text-on-error-container">
+                  {attachError}
+                </p>
+              )}
+
               <form onSubmit={handleSend} className="flex items-center gap-2 border-t border-outline-variant/60 p-3">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  onChange={(e) => handleFileSelected(e.target.files?.[0])}
+                />
+                <button
+                  type="button"
+                  disabled={attaching}
+                  onClick={() => fileInputRef.current?.click()}
+                  aria-label="Attach a file or photo"
+                  title={`Attach a file or photo (max ${MAX_FILE_SIZE_LABEL})`}
+                  className="flex size-11 shrink-0 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container disabled:opacity-50"
+                >
+                  {attaching ? <Loader2 className="size-5 animate-spin" /> : <Paperclip className="size-5" />}
+                </button>
                 <input
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}

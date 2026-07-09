@@ -39,6 +39,7 @@ const MessagesPage = lazy(() => import('@/pages/messages/MessagesPage'))
 const NotificationsPage = lazy(() => import('@/pages/notifications/NotificationsPage'))
 const ProfilePage = lazy(() => import('@/pages/profile/ProfilePage'))
 const SettingsPage = lazy(() => import('@/pages/settings/SettingsPage'))
+const HelpPage = lazy(() => import('@/pages/help/HelpPage'))
 
 const ReportsPage = lazy(() => import('@/pages/reports/ReportsPage'))
 const AnalyticsPage = lazy(() => import('@/pages/analytics/AnalyticsPage'))
@@ -243,6 +244,14 @@ export function AppRoutes() {
           element={
             <ProtectedRoute>
               <SettingsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.help}
+          element={
+            <ProtectedRoute>
+              <HelpPage />
             </ProtectedRoute>
           }
         />

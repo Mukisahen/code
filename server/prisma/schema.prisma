@@ -283,6 +283,12 @@ model Message {
   text           String
   sentAt         DateTime     @default(now())
 
+  // Optional file/image attachment — attachmentType is "image" | "file"
+  attachmentUrl  String?
+  attachmentType String?
+  attachmentName String?
+  attachmentSize Int?
+
   conversationId String
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 

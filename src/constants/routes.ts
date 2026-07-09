@@ -36,6 +36,7 @@ export const ROUTES = {
   profile: '/profile',
   settings: '/settings',
   about: '/about',
+  help: '/help',
 
   notFound: '/404',
 } as const

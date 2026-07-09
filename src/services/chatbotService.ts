@@ -2,7 +2,14 @@ import { api } from '@/lib/apiClient'
 import { CHATBOT_FAQ, FALLBACK_RESPONSE } from '@/mocks/chatbotFaq'
 import type { ChatLang } from '@/types/chatbot'
 
+export type ChatTopic = 'farming' | 'app'
+
 const RESPONSE_DELAY_MS = 700
+
+const APP_HELP_FALLBACK: Record<ChatLang, string> = {
+  en: "I couldn't reach the AI assistant right now. For help using Farm Bhade, check Settings, or tap \"Contact support\" below to reach our team directly.",
+  lg: 'Sisobodde kutuuka ku mubeezi wa AI kaakano. Okufuna obuyambi ku Farm Bhade, laba mu Settings, oba nyiga "Contact support" wansi okutuukirira ekibinja kyaffe.',
+}
 
 function delay<T>(value: T, ms = RESPONSE_DELAY_MS): Promise<T> {
   return new Promise((resolve) => setTimeout(() => resolve(value), ms))
@@ -31,16 +38,17 @@ function askLocalFaq(input: string, lang: ChatLang): string {
 /**
  * Asks the Claude-powered backend assistant first. If the backend has no
  * ANTHROPIC_API_KEY configured (or the call fails), it returns `reply: null`
- * and we fall back to the local keyword-matched FAQ so the chatbot always
- * responds, even without an AI key configured.
+ * and we fall back to a local canned response so the chatbot always
+ * responds, even without an AI key configured. `topic` selects which
+ * grounding knowledge (maize farming vs. app usage) the backend uses.
  */
-export async function askAssistant(input: string, lang: ChatLang): Promise<string> {
+export async function askAssistant(input: string, lang: ChatLang, topic: ChatTopic = 'farming'): Promise<string> {
   try {
-    const { reply } = await api.post<{ reply: string | null }>('/chatbot/ask', { message: input, lang })
+    const { reply } = await api.post<{ reply: string | null }>('/chatbot/ask', { message: input, lang, topic })
     if (reply) return reply
   } catch {
-    // network/server error — fall through to the local FAQ
+    // network/server error — fall through to the local fallback
   }
 
-  return delay(askLocalFaq(input, lang))
+  return delay(topic === 'app' ? APP_HELP_FALLBACK[lang] : askLocalFaq(input, lang))
 }

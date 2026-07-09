@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { PlusCircle, ClipboardList } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { PlusCircle, ClipboardList, MessageCircle } from 'lucide-react'
 import { DashboardLayout } from '@/layouts/DashboardLayout'
 import { Card } from '@/components/common/Card'
 import { Badge } from '@/components/common/Badge'
@@ -8,8 +9,10 @@ import { Input } from '@/components/common/Input'
 import { EmptyState } from '@/components/common/EmptyState'
 import { InlineSpinner } from '@/components/common/InlineSpinner'
 import * as marketplaceService from '@/services/marketplaceService'
+import * as messagesService from '@/services/messagesService'
 import type { BuyerRequest, BuyerRequestStatus } from '@/types/order'
 import { useAuth } from '@/hooks/useAuth'
+import { ROUTES } from '@/constants/routes'
 import { formatRelativeTime } from '@/utils/format'
 
 const STATUS_TONE: Record<BuyerRequestStatus, 'neutral' | 'warning' | 'success' | 'error'> = {
@@ -21,6 +24,7 @@ const STATUS_TONE: Record<BuyerRequestStatus, 'neutral' | 'warning' | 'success' 
 
 export default function BuyerRequestsPage() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const canPostRequests = user?.role === 'buyer' || user?.role === 'processor'
   const [requests, setRequests] = useState<BuyerRequest[]>([])
   const [loading, setLoading] = useState(true)
@@ -29,6 +33,23 @@ export default function BuyerRequestsPage() {
   const [quantity, setQuantity] = useState('')
   const [targetPrice, setTargetPrice] = useState('')
   const [formError, setFormError] = useState<string | null>(null)
+  const [contactingId, setContactingId] = useState<string | null>(null)
+
+  async function handleMessageBuyer(request: BuyerRequest) {
+    if (contactingId) return
+    setContactingId(request.id)
+    try {
+      const conversationId = await messagesService.startDirectConversation(
+        request.buyerId,
+        `${request.category} request`,
+      )
+      navigate(ROUTES.messages, { state: { conversationId } })
+    } catch {
+      // ignore — the requester can retry
+    } finally {
+      setContactingId(null)
+    }
+  }
 
   useEffect(() => {
     marketplaceService
@@ -117,6 +138,17 @@ export default function BuyerRequestsPage() {
                   <p className="text-sm font-semibold text-on-surface">UGX {req.targetPrice.toLocaleString()}/kg</p>
                 )}
                 <Badge tone={STATUS_TONE[req.status]}>{req.status}</Badge>
+                {req.buyerId !== user?.id && (
+                  <Button
+                    size="sm"
+                    variant="outlined"
+                    loading={contactingId === req.id}
+                    leadingIcon={<MessageCircle className="size-3.5" />}
+                    onClick={() => handleMessageBuyer(req)}
+                  >
+                    Message buyer
+                  </Button>
+                )}
               </div>
             </Card>
           ))}

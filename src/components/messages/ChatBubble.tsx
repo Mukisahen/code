@@ -1,7 +1,13 @@
 import { useRef, useState, type PointerEvent } from 'react'
-import { Reply } from 'lucide-react'
+import { Reply, FileText, Download } from 'lucide-react'
 import type { ChatMessage } from '@/types/message'
 import { cn } from '@/utils/cn'
+
+function formatFileSize(bytes?: number): string {
+  if (!bytes) return ''
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
 
 const SWIPE_THRESHOLD = 56
 const MAX_DRAG = 76
@@ -48,6 +54,7 @@ export function ChatBubble({ message, isMine, onReply }: ChatBubbleProps) {
   }
 
   const quoted = parseQuoted(message.text)
+  const bodyText = quoted ? quoted.text : message.text
 
   return (
     <div className={cn('relative flex animate-bubble-in', isMine ? 'justify-end' : 'justify-start')}>
@@ -80,7 +87,38 @@ export function ChatBubble({ message, isMine, onReply }: ChatBubbleProps) {
             {quoted.quote}
           </div>
         )}
-        {quoted ? quoted.text : message.text}
+
+        {message.attachmentUrl && message.attachmentType === 'image' && (
+          <a href={message.attachmentUrl} target="_blank" rel="noreferrer" className="mb-1.5 block">
+            <img
+              src={message.attachmentUrl}
+              alt={message.attachmentName ?? 'Attachment'}
+              className="max-h-64 w-full rounded-md object-cover"
+            />
+          </a>
+        )}
+
+        {message.attachmentUrl && message.attachmentType === 'file' && (
+          <a
+            href={message.attachmentUrl}
+            target="_blank"
+            rel="noreferrer"
+            download={message.attachmentName}
+            className={cn(
+              'mb-1.5 flex items-center gap-2.5 rounded-md px-2.5 py-2',
+              isMine ? 'bg-on-primary/10' : 'bg-surface',
+            )}
+          >
+            <FileText className="size-6 shrink-0" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-semibold">{message.attachmentName ?? 'File'}</p>
+              <p className="text-[11px] opacity-70">{formatFileSize(message.attachmentSize)}</p>
+            </div>
+            <Download className="size-3.5 shrink-0 opacity-70" />
+          </a>
+        )}
+
+        {bodyText}
       </div>
     </div>
   )

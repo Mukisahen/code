@@ -1,15 +1,36 @@
-import { Link } from 'react-router-dom'
-import { Heart, MapPin, ShieldCheck, Star } from 'lucide-react'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { Heart, MapPin, ShieldCheck, Star, Phone, MessageCircle } from 'lucide-react'
 import { Card } from '@/components/common/Card'
-import { productDetailsRoute } from '@/constants/routes'
+import { productDetailsRoute, ROUTES } from '@/constants/routes'
 import { PRODUCT_CATEGORY_LABELS, type Product } from '@/types/product'
 import { CATEGORY_IMAGES } from '@/mocks/categoryImages'
 import { useFavorites } from '@/hooks/useFavorites'
+import { useAuth } from '@/hooks/useAuth'
+import * as messagesService from '@/services/messagesService'
 import { cn } from '@/utils/cn'
 
 export function ProductCard({ product }: { product: Product }) {
   const { isFavorite, toggleFavorite } = useFavorites()
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  const [contacting, setContacting] = useState(false)
   const favorited = isFavorite(product.id)
+  const isOwnListing = user?.id === product.seller.id
+
+  async function handleChat(event: React.MouseEvent) {
+    event.preventDefault()
+    if (contacting) return
+    setContacting(true)
+    try {
+      const conversationId = await messagesService.startDirectConversation(product.seller.id, product.title)
+      navigate(ROUTES.messages, { state: { conversationId } })
+    } catch {
+      // ignore — user can still reach the seller from the product details page
+    } finally {
+      setContacting(false)
+    }
+  }
 
   return (
     <Card className="group relative flex flex-col gap-0 overflow-hidden p-0">
@@ -61,6 +82,27 @@ export function ProductCard({ product }: { product: Product }) {
             <Star className="size-3.5 fill-secondary text-secondary" /> {product.seller.rating.toFixed(1)}
           </span>
         </div>
+
+        {!isOwnListing && (
+          <div className="mt-1 flex items-center gap-2 border-t border-outline-variant/60 pt-2">
+            <a
+              href={`tel:${product.seller.phone}`}
+              onClick={(e) => e.stopPropagation()}
+              aria-label={`Call ${product.seller.name}`}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-md bg-surface-container py-1.5 text-xs font-semibold text-on-surface hover:bg-surface-variant"
+            >
+              <Phone className="size-3.5" /> Call
+            </a>
+            <button
+              onClick={handleChat}
+              disabled={contacting}
+              aria-label={`Message ${product.seller.name}`}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-md bg-primary-container py-1.5 text-xs font-semibold text-on-primary-container hover:opacity-90 disabled:opacity-60"
+            >
+              <MessageCircle className="size-3.5" /> Chat
+            </button>
+          </div>
+        )}
       </div>
     </Card>
   )

@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { LogOut, Bell, MessageCircle } from 'lucide-react'
+import { LogOut, Bell, MessageCircle, LifeBuoy } from 'lucide-react'
 import { ThemeToggle } from '@/components/common/ThemeToggle'
 import { Button } from '@/components/common/Button'
 import { Sidebar } from '@/components/layout/Sidebar'
@@ -53,6 +53,14 @@ export function DashboardLayout({ title, subtitle, children, actions }: Dashboar
             </div>
             <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
               {actions}
+              <Link
+                to={ROUTES.help}
+                className="hidden size-10 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container sm:inline-flex"
+                aria-label="Help & support"
+                title="Help & support"
+              >
+                <LifeBuoy className="size-5" />
+              </Link>
               <Link
                 to={ROUTES.messages}
                 className="inline-flex size-10 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container"

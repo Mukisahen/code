@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { Moon, Sun, Globe, Bell, Lock, Trash2, LogOut, ChevronRight, MessageSquareText, Info, WifiOff, MessageSquare, Mic } from 'lucide-react'
+import { Moon, Sun, Globe, Bell, Lock, Trash2, LogOut, ChevronRight, MessageSquareText, Info, WifiOff, MessageSquare, Mic, LifeBuoy } from 'lucide-react'
 import { DashboardLayout } from '@/layouts/DashboardLayout'
 import { Card } from '@/components/common/Card'
 import { Switch } from '@/components/common/Switch'
@@ -160,6 +160,14 @@ export default function SettingsPage() {
             <span className="flex-1 text-sm font-semibold text-on-surface">Change password</span>
             <ChevronRight className="size-4 text-on-surface-variant" />
           </button>
+          <Link
+            to={ROUTES.help}
+            className="flex w-full items-center gap-3 border-t border-outline-variant/60 px-5 py-4 text-left hover:bg-surface-container"
+          >
+            <LifeBuoy className="size-4.5 text-on-surface-variant" />
+            <span className="flex-1 text-sm font-semibold text-on-surface">Help &amp; support</span>
+            <ChevronRight className="size-4 text-on-surface-variant" />
+          </Link>
           <Link
             to={ROUTES.about}
             className="flex w-full items-center gap-3 border-t border-outline-variant/60 px-5 py-4 text-left hover:bg-surface-container"

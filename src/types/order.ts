@@ -15,6 +15,7 @@ export type BuyerRequestStatus = 'open' | 'negotiating' | 'fulfilled' | 'closed'
 
 export interface BuyerRequest {
   id: string
+  buyerId: string
   buyerName: string
   district: string
   category: string

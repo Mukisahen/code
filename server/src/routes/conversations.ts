@@ -3,6 +3,9 @@ import { z } from 'zod'
 import { prisma } from '../lib/prisma.js'
 import { asyncHandler } from '../middleware/asyncHandler.js'
 import { requireAuth } from '../middleware/auth.js'
+import { chatUpload } from '../middleware/chatUpload.js'
+import { saveUploadedImage } from '../lib/imageStorage.js'
+import { saveUploadedFile } from '../lib/fileStorage.js'
 import { initials } from '../lib/serialize.js'
 import { badRequest, forbidden, notFound } from '../lib/httpError.js'
 
@@ -37,6 +40,7 @@ conversationsRouter.get(
         participantInitials: other ? initials(other.fullName) : '?',
         participantAvatarUrl: other?.avatarUrl ?? undefined,
         participantRole: other?.role,
+        participantPhone: other?.phone,
         lastMessage: last?.text ?? '',
         lastMessageAt: (last?.sentAt ?? m.conversation.lastMessageAt).toISOString(),
         unreadCount: m.unreadCount,
@@ -154,6 +158,10 @@ conversationsRouter.get(
         senderName: m.sender.fullName,
         text: m.text,
         sentAt: m.sentAt.toISOString(),
+        attachmentUrl: m.attachmentUrl ?? undefined,
+        attachmentType: m.attachmentType ?? undefined,
+        attachmentName: m.attachmentName ?? undefined,
+        attachmentSize: m.attachmentSize ?? undefined,
       })),
     })
   }),
@@ -207,6 +215,77 @@ conversationsRouter.post(
         senderName: message.sender.fullName,
         text: message.text,
         sentAt: message.sentAt.toISOString(),
+      },
+    })
+  }),
+)
+
+conversationsRouter.post(
+  '/:id/attachments',
+  chatUpload.single('file'),
+  asyncHandler(async (req, res) => {
+    if (!req.file) throw badRequest('A file is required')
+
+    const membership = await prisma.conversationParticipant.findUnique({
+      where: { conversationId_userId: { conversationId: req.params.id, userId: req.user!.id } },
+    })
+    if (!membership) throw forbidden('Not a participant in this conversation')
+
+    const isImage = req.file.mimetype.startsWith('image/')
+    const attachmentUrl = isImage
+      ? await saveUploadedImage(req.file.buffer, 'chat', 1600)
+      : await saveUploadedFile(req.file.buffer, 'chat-files', req.file.originalname)
+
+    const caption = typeof req.body.caption === 'string' ? req.body.caption.trim() : ''
+
+    const message = await prisma.message.create({
+      data: {
+        conversationId: req.params.id,
+        senderId: req.user!.id,
+        text: caption,
+        attachmentUrl,
+        attachmentType: isImage ? 'image' : 'file',
+        attachmentName: req.file.originalname,
+        attachmentSize: req.file.size,
+      },
+      include: { sender: true },
+    })
+
+    await prisma.conversation.update({
+      where: { id: req.params.id },
+      data: { lastMessageAt: message.sentAt },
+    })
+
+    const otherParticipants = await prisma.conversationParticipant.findMany({
+      where: { conversationId: req.params.id, userId: { not: req.user!.id } },
+    })
+
+    await prisma.conversationParticipant.updateMany({
+      where: { id: { in: otherParticipants.map((p) => p.id) } },
+      data: { unreadCount: { increment: 1 } },
+    })
+
+    await prisma.notification.createMany({
+      data: otherParticipants.map((p) => ({
+        userId: p.userId,
+        type: 'message' as const,
+        title: `New message from ${req.user!.fullName}`,
+        description: isImage ? '📷 Sent a photo' : `📎 Sent a file — ${req.file!.originalname}`,
+      })),
+    })
+
+    res.status(201).json({
+      message: {
+        id: message.id,
+        conversationId: message.conversationId,
+        senderId: 'me',
+        senderName: message.sender.fullName,
+        text: message.text,
+        sentAt: message.sentAt.toISOString(),
+        attachmentUrl: message.attachmentUrl ?? undefined,
+        attachmentType: message.attachmentType ?? undefined,
+        attachmentName: message.attachmentName ?? undefined,
+        attachmentSize: message.attachmentSize ?? undefined,
       },
     })
   }),

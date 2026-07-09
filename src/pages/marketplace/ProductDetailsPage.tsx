@@ -20,9 +20,11 @@ import { Avatar } from '@/components/common/Avatar'
 import { EmptyState } from '@/components/common/EmptyState'
 import { InlineSpinner } from '@/components/common/InlineSpinner'
 import * as marketplaceService from '@/services/marketplaceService'
+import * as messagesService from '@/services/messagesService'
 import { CATEGORY_IMAGES } from '@/mocks/categoryImages'
 import { PRODUCT_CATEGORY_LABELS, type Product } from '@/types/product'
 import { useFavorites } from '@/hooks/useFavorites'
+import { useAuth } from '@/hooks/useAuth'
 import { ROUTES } from '@/constants/routes'
 import { formatRelativeTime, formatDate } from '@/utils/format'
 import { cn } from '@/utils/cn'
@@ -31,6 +33,7 @@ export default function ProductDetailsPage() {
   const { productId } = useParams()
   const navigate = useNavigate()
   const { isFavorite, toggleFavorite } = useFavorites()
+  const { user } = useAuth()
   const [offerAmount, setOfferAmount] = useState('')
   const [offerMessage, setOfferMessage] = useState('')
   const [offerSent, setOfferSent] = useState(false)
@@ -38,6 +41,8 @@ export default function ProductDetailsPage() {
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setProductNotFound] = useState(false)
+  const [contacting, setContacting] = useState(false)
+  const [contactError, setContactError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!productId) return
@@ -86,6 +91,20 @@ export default function ProductDetailsPage() {
   }
 
   const favorited = isFavorite(product.id)
+
+  async function handleContactSeller() {
+    if (!product || contacting) return
+    setContactError(null)
+    setContacting(true)
+    try {
+      const conversationId = await messagesService.startDirectConversation(product.seller.id, product.title)
+      navigate(ROUTES.messages, { state: { conversationId } })
+    } catch {
+      setContactError('Could not start the conversation. Please try again.')
+    } finally {
+      setContacting(false)
+    }
+  }
 
   async function handleOffer(event: FormEvent) {
     event.preventDefault()
@@ -250,18 +269,29 @@ export default function ProductDetailsPage() {
               </div>
             </div>
 
-            <div className="mt-5 flex flex-col gap-2">
-              <Link to={ROUTES.messages}>
-                <Button fullWidth leadingIcon={<MessageCircle className="size-4" />}>
-                  Chat with seller
-                </Button>
-              </Link>
-              <a href={`tel:${product.seller.phone}`}>
-                <Button variant="outlined" fullWidth leadingIcon={<Phone className="size-4" />}>
-                  Call {product.seller.phone}
-                </Button>
-              </a>
-            </div>
+            {user?.id !== product.seller.id && (
+              <div className="mt-5">
+                <p className="mb-2 text-xs font-bold uppercase tracking-wide text-on-surface-variant">
+                  Contact seller
+                </p>
+                <div className="flex flex-col gap-2">
+                  <Button
+                    fullWidth
+                    loading={contacting}
+                    leadingIcon={<MessageCircle className="size-4" />}
+                    onClick={handleContactSeller}
+                  >
+                    Chat with seller
+                  </Button>
+                  <a href={`tel:${product.seller.phone}`}>
+                    <Button variant="outlined" fullWidth leadingIcon={<Phone className="size-4" />}>
+                      Call {product.seller.phone}
+                    </Button>
+                  </a>
+                  {contactError && <p className="text-xs font-medium text-error">{contactError}</p>}
+                </div>
+              </div>
+            )}
 
             {!product.seller.verified && (
               <Badge tone="warning" className="mt-4 w-full justify-center">
