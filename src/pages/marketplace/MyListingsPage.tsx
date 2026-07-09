@@ -22,6 +22,10 @@ export default function MyListingsPage() {
   const [category, setCategory] = useState<ProductCategory>('dry-grain')
   const [price, setPrice] = useState('')
   const [quantity, setQuantity] = useState('')
+  const [variety, setVariety] = useState('')
+  const [grade, setGrade] = useState('')
+  const [moisturePercent, setMoisturePercent] = useState('')
+  const [harvestDate, setHarvestDate] = useState('')
   const [formError, setFormError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -45,11 +49,19 @@ export default function MyListingsPage() {
         quantityAvailable: Number(quantity),
         district: user.district,
         description: 'Newly added listing.',
+        variety: variety.trim() || undefined,
+        grade: grade.trim() || undefined,
+        moisturePercent: moisturePercent.trim() ? Number(moisturePercent) : undefined,
+        harvestDate: harvestDate || undefined,
       })
       setListings((prev) => [created, ...prev])
       setTitle('')
       setPrice('')
       setQuantity('')
+      setVariety('')
+      setGrade('')
+      setMoisturePercent('')
+      setHarvestDate('')
       setIsAdding(false)
     } catch {
       setFormError('Could not publish listing. Please try again.')
@@ -104,6 +116,26 @@ export default function MyListingsPage() {
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
               required
+            />
+            <Input
+              placeholder="Variety (e.g. Longe 10H)"
+              value={variety}
+              onChange={(e) => setVariety(e.target.value)}
+            />
+            <Input placeholder="Grade (e.g. Grade 1)" value={grade} onChange={(e) => setGrade(e.target.value)} />
+            <Input
+              type="number"
+              placeholder="Moisture % (optional)"
+              value={moisturePercent}
+              onChange={(e) => setMoisturePercent(e.target.value)}
+              min={0}
+              max={100}
+            />
+            <Input
+              type="date"
+              placeholder="Harvest date"
+              value={harvestDate}
+              onChange={(e) => setHarvestDate(e.target.value)}
             />
             {formError && <p className="text-xs font-medium text-error sm:col-span-2">{formError}</p>}
             <Button type="submit" className="sm:col-span-2">

@@ -35,6 +35,10 @@ export interface Product {
   imageUrl?: string
   postedAt: string
   featured?: boolean
+  moisturePercent?: number
+  variety?: string
+  grade?: string
+  harvestDate?: string
 }
 
 export const PRODUCT_CATEGORY_LABELS: Record<ProductCategory, string> = {

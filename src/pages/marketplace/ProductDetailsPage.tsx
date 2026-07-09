@@ -24,7 +24,7 @@ import { CATEGORY_IMAGES } from '@/mocks/categoryImages'
 import { PRODUCT_CATEGORY_LABELS, type Product } from '@/types/product'
 import { useFavorites } from '@/hooks/useFavorites'
 import { ROUTES } from '@/constants/routes'
-import { formatRelativeTime } from '@/utils/format'
+import { formatRelativeTime, formatDate } from '@/utils/format'
 import { cn } from '@/utils/cn'
 
 export default function ProductDetailsPage() {
@@ -154,6 +154,35 @@ export default function ProductDetailsPage() {
               </p>
 
               <p className="mt-4 text-sm text-on-surface">{product.description}</p>
+
+              {(product.variety || product.grade || product.moisturePercent != null || product.harvestDate) && (
+                <div className="mt-4 grid grid-cols-2 gap-3 rounded-md bg-surface-container p-3.5 text-sm sm:grid-cols-4">
+                  {product.variety && (
+                    <div>
+                      <p className="font-semibold text-on-surface">{product.variety}</p>
+                      <p className="text-xs text-on-surface-variant">Variety</p>
+                    </div>
+                  )}
+                  {product.grade && (
+                    <div>
+                      <p className="font-semibold text-on-surface">{product.grade}</p>
+                      <p className="text-xs text-on-surface-variant">Grade</p>
+                    </div>
+                  )}
+                  {product.moisturePercent != null && (
+                    <div>
+                      <p className="font-semibold text-on-surface">{product.moisturePercent}%</p>
+                      <p className="text-xs text-on-surface-variant">Moisture</p>
+                    </div>
+                  )}
+                  {product.harvestDate && (
+                    <div>
+                      <p className="font-semibold text-on-surface">{formatDate(product.harvestDate)}</p>
+                      <p className="text-xs text-on-surface-variant">Harvest date</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </Card>
 
@@ -211,9 +240,13 @@ export default function ProductDetailsPage() {
                 <p className="font-semibold text-on-surface">{product.seller.totalSales}</p>
                 <p className="text-xs text-on-surface-variant">Sales completed</p>
               </div>
-              <div className="col-span-2">
+              <div>
                 <p className="font-semibold text-on-surface">{product.district}</p>
                 <p className="text-xs text-on-surface-variant">District</p>
+              </div>
+              <div>
+                <p className="font-semibold text-on-surface">{formatDate(product.seller.memberSince)}</p>
+                <p className="text-xs text-on-surface-variant">Member since</p>
               </div>
             </div>
 

@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   Users,
   Store,
+  Sparkles,
 } from 'lucide-react'
 import { Button } from '@/components/common/Button'
 import { Logo } from '@/components/common/Logo'
@@ -71,6 +72,11 @@ export default function LandingPage() {
           <Logo size="sm" />
           <div className="flex items-center gap-2 sm:gap-3">
             <ThemeToggle />
+            <Link to={`${ROUTES.login}?demo=1`} className="hidden sm:block">
+              <Button variant="text" size="sm" leadingIcon={<Sparkles className="size-4" />}>
+                View Demo
+              </Button>
+            </Link>
             <Link to={ROUTES.login} className="hidden sm:block">
               <Button variant="text" size="sm">
                 Log in
@@ -109,6 +115,9 @@ export default function LandingPage() {
                 </Button>
               </Link>
             </div>
+            <Link to={`${ROUTES.login}?demo=1`} className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline">
+              <Sparkles className="size-4" /> Or explore an instant live demo — no sign-up needed
+            </Link>
           </div>
 
           <div className="relative mb-8 lg:mb-0">
@@ -216,6 +225,9 @@ export default function LandingPage() {
       <footer className="border-t border-outline-variant/60 px-5 py-8 sm:px-8">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 sm:flex-row">
           <Logo size="sm" />
+          <Link to={ROUTES.about} className="text-xs font-semibold text-on-surface-variant hover:text-on-surface hover:underline">
+            About Farm Bhade
+          </Link>
           <p className="text-xs text-on-surface-variant">
             &copy; {new Date().getFullYear()} Farm Bhade. All rights reserved.
           </p>

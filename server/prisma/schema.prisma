@@ -102,6 +102,15 @@ enum TicketStatus {
   resolved
 }
 
+enum JourneyStage {
+  planning
+  growing
+  harvesting
+  storage
+  selling
+  processing
+}
+
 model User {
   id               String            @id @default(cuid())
   fullName         String
@@ -112,6 +121,7 @@ model User {
   isSuperAdmin     Boolean           @default(false)
   district         String
   avatarUrl        String?
+  journeyStage     JourneyStage      @default(planning)
   subscriptionTier SubscriptionTier  @default(free)
   verified         Boolean           @default(false)
   status           UserStatus        @default(active)
@@ -150,6 +160,12 @@ model Product {
   imageUrl          String?
   featured          Boolean         @default(false)
   postedAt          DateTime        @default(now())
+
+  // Buyer-facing quality info — optional since older listings won't have it
+  moisturePercent Float?
+  variety         String?
+  grade           String?
+  harvestDate     DateTime?
 
   sellerId String
   seller   User   @relation(fields: [sellerId], references: [id], onDelete: Cascade)
@@ -229,7 +245,10 @@ model CropDiagnosis {
   severity        DiagnosisSeverity?
   confidence      Int?
   summary         String?
+  causes          String[]
   recommendations String[]
+  preventionTips  String[]
+  yieldImpact     String?
   createdAt       DateTime          @default(now())
 
   userId String

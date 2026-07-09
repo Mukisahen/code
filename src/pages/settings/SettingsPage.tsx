@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Moon, Sun, Globe, Bell, Lock, Trash2, LogOut, ChevronRight, MessageSquareText } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Moon, Sun, Globe, Bell, Lock, Trash2, LogOut, ChevronRight, MessageSquareText, Info, WifiOff, MessageSquare, Mic } from 'lucide-react'
 import { DashboardLayout } from '@/layouts/DashboardLayout'
 import { Card } from '@/components/common/Card'
 import { Switch } from '@/components/common/Switch'
@@ -13,10 +14,17 @@ import * as ticketsService from '@/services/ticketsService'
 import type { MyTicket } from '@/types/ticket'
 import { formatRelativeTime } from '@/utils/format'
 import { cn } from '@/utils/cn'
+import { ROUTES } from '@/constants/routes'
 
 const TICKET_STATUS_TONE = { open: 'error', 'in-progress': 'warning', resolved: 'success' } as const
 
 const LANGUAGES = ['English', 'Luganda', 'Runyankole', 'Ateso']
+
+const ROADMAP_ITEMS = [
+  { icon: WifiOff, label: 'Offline Mode', description: 'Keep working in the field and sync automatically once you reconnect' },
+  { icon: MessageSquare, label: 'USSD & SMS Access', description: 'Check prices and post listings from any basic phone, no internet needed' },
+  { icon: Mic, label: 'Voice Assistant', description: 'Ask farming questions out loud in English or Luganda' },
+] as const
 
 const NOTIFICATION_PREFS = [
   { key: 'orders', label: 'Order updates', description: 'New orders, offers and status changes' },
@@ -128,12 +136,38 @@ export default function SettingsPage() {
           </div>
         </Card>
 
+        <Card>
+          <h2 className="mb-3 font-bold text-on-surface">Coming soon</h2>
+          <div className="divide-y divide-outline-variant/60">
+            {ROADMAP_ITEMS.map(({ icon: Icon, label, description }) => (
+              <div key={label} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-surface-container text-on-surface-variant">
+                  <Icon className="size-4.5" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-on-surface">{label}</p>
+                  <p className="text-xs text-on-surface-variant">{description}</p>
+                </div>
+                <Badge tone="warning">Coming soon</Badge>
+              </div>
+            ))}
+          </div>
+        </Card>
+
         <Card className="p-0">
           <button className="flex w-full items-center gap-3 px-5 py-4 text-left hover:bg-surface-container">
             <Lock className="size-4.5 text-on-surface-variant" />
             <span className="flex-1 text-sm font-semibold text-on-surface">Change password</span>
             <ChevronRight className="size-4 text-on-surface-variant" />
           </button>
+          <Link
+            to={ROUTES.about}
+            className="flex w-full items-center gap-3 border-t border-outline-variant/60 px-5 py-4 text-left hover:bg-surface-container"
+          >
+            <Info className="size-4.5 text-on-surface-variant" />
+            <span className="flex-1 text-sm font-semibold text-on-surface">About Farm Bhade</span>
+            <ChevronRight className="size-4 text-on-surface-variant" />
+          </Link>
           <button className="flex w-full items-center gap-3 border-t border-outline-variant/60 px-5 py-4 text-left hover:bg-error-container/40">
             <Trash2 className="size-4.5 text-error" />
             <span className="flex-1 text-sm font-semibold text-error">Delete account</span>

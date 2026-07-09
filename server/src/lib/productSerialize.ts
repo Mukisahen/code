@@ -16,5 +16,9 @@ export function toClientProduct(product: Product & { seller: User }) {
     imageUrl: product.imageUrl ?? undefined,
     postedAt: product.postedAt.toISOString(),
     featured: product.featured,
+    moisturePercent: product.moisturePercent ?? undefined,
+    variety: product.variety ?? undefined,
+    grade: product.grade ?? undefined,
+    harvestDate: product.harvestDate ? product.harvestDate.toISOString() : undefined,
   }
 }

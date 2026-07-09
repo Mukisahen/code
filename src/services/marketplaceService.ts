@@ -55,6 +55,10 @@ export interface CreateProductPayload {
   quantityAvailable: number
   district: string
   description: string
+  moisturePercent?: number
+  variety?: string
+  grade?: string
+  harvestDate?: string
 }
 
 export async function createProduct(payload: CreateProductPayload): Promise<Product> {

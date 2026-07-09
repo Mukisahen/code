@@ -19,6 +19,7 @@ export function toPublicUser(user: User) {
     isSuperAdmin: user.isSuperAdmin,
     district: user.district,
     avatarUrl: user.avatarUrl ?? undefined,
+    journeyStage: user.journeyStage,
     subscriptionTier: user.subscriptionTier,
     verified: user.verified,
     status: user.status,

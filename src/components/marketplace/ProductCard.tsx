@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Heart, MapPin, ShieldCheck } from 'lucide-react'
+import { Heart, MapPin, ShieldCheck, Star } from 'lucide-react'
 import { Card } from '@/components/common/Card'
 import { productDetailsRoute } from '@/constants/routes'
 import { PRODUCT_CATEGORY_LABELS, type Product } from '@/types/product'
@@ -47,10 +47,18 @@ export function ProductCard({ product }: { product: Product }) {
         <p className="flex items-center gap-1 text-xs text-on-surface-variant">
           <MapPin className="size-3.5" /> {product.district}
         </p>
-        <div className="mt-1 flex items-center justify-between">
-          <span className="flex items-center gap-1 text-xs text-on-surface-variant">
-            {product.seller.name}
-            {product.seller.verified && <ShieldCheck className="size-3.5 text-primary" />}
+        {(product.variety || product.grade) && (
+          <p className="truncate text-xs text-on-surface-variant">
+            {[product.variety, product.grade].filter(Boolean).join(' · ')}
+          </p>
+        )}
+        <div className="mt-1 flex items-center justify-between gap-2">
+          <span className="flex min-w-0 items-center gap-1 truncate text-xs text-on-surface-variant">
+            <span className="truncate">{product.seller.name}</span>
+            {product.seller.verified && <ShieldCheck className="size-3.5 shrink-0 text-primary" />}
+          </span>
+          <span className="flex shrink-0 items-center gap-0.5 text-xs font-semibold text-on-surface-variant">
+            <Star className="size-3.5 fill-secondary text-secondary" /> {product.seller.rating.toFixed(1)}
           </span>
         </div>
       </div>

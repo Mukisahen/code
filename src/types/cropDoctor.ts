@@ -8,6 +8,9 @@ export interface CropDiagnosis {
   severity?: DiagnosisSeverity
   confidence?: number
   summary?: string
+  causes?: string[]
   recommendations: string[]
+  preventionTips?: string[]
+  yieldImpact?: string
   createdAt: string
 }

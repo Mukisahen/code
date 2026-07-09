@@ -34,6 +34,24 @@ usersRouter.patch(
   }),
 )
 
+const JOURNEY_STAGES = ['planning', 'growing', 'harvesting', 'storage', 'selling', 'processing'] as const
+
+const stageSchema = z.object({ stage: z.enum(JOURNEY_STAGES) })
+
+usersRouter.patch(
+  '/me/stage',
+  asyncHandler(async (req, res) => {
+    const { stage } = stageSchema.parse(req.body)
+
+    const user = await prisma.user.update({
+      where: { id: req.user!.id },
+      data: { journeyStage: stage },
+    })
+
+    res.json({ user: toPublicUser(user) })
+  }),
+)
+
 usersRouter.post(
   '/me/avatar',
   imageUpload.single('photo'),

@@ -31,6 +31,7 @@ async function main() {
         verified: true,
         rating: 4.8,
         totalSales: 62,
+        journeyStage: 'growing',
       },
       update: {},
     }),
@@ -112,8 +113,8 @@ async function main() {
   console.log('Seeding marketplace listings...')
 
   const productSeeds = [
-    { title: 'Fresh Green Maize — Longe 10H', category: 'green_maize', pricePerUnit: 800, unit: 'cob', quantityAvailable: 1200, district: 'Masindi', description: 'Freshly harvested green maize, sweet and tender. Ready for immediate pickup.', sellerId: farmer.id, featured: true },
-    { title: 'Dry Grain Maize — Grade A', category: 'dry_grain', pricePerUnit: 1450, unit: 'kg', quantityAvailable: 8000, district: 'Kapchorwa', description: 'Well-dried, cleaned maize grain at 12% moisture. Tested and certified quality.', sellerId: farmers['Byaruhanga Peter'].id, featured: true },
+    { title: 'Fresh Green Maize — Longe 10H', category: 'green_maize', pricePerUnit: 800, unit: 'cob', quantityAvailable: 1200, district: 'Masindi', description: 'Freshly harvested green maize, sweet and tender. Ready for immediate pickup.', sellerId: farmer.id, featured: true, variety: 'Longe 10H', grade: 'Grade 1', moisturePercent: 18, harvestDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) },
+    { title: 'Dry Grain Maize — Grade A', category: 'dry_grain', pricePerUnit: 1450, unit: 'kg', quantityAvailable: 8000, district: 'Kapchorwa', description: 'Well-dried, cleaned maize grain at 12% moisture. Tested and certified quality.', sellerId: farmers['Byaruhanga Peter'].id, featured: true, variety: 'Longe 7H', grade: 'Grade A', moisturePercent: 12, harvestDate: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000) },
     { title: 'Wet Maize — Bulk Supply', category: 'wet_maize', pricePerUnit: 900, unit: 'kg', quantityAvailable: 5000, district: 'Iganga', description: 'Recently harvested wet maize, ideal for immediate processing or drying.', sellerId: farmers['Namuli Sarah'].id },
     { title: 'Premium Maize Flour (Posho)', category: 'maize_flour', pricePerUnit: 3200, unit: 'kg', quantityAvailable: 2000, district: 'Iganga', description: 'Finely milled maize flour, packaged and ready for retail distribution.', sellerId: processor.id },
     { title: 'Dry Maize Cobs', category: 'dry_cobs', pricePerUnit: 600, unit: 'cob', quantityAvailable: 3000, district: 'Lira', description: 'Sun-dried maize cobs, great for seed selection or animal feed.', sellerId: farmers['Opio Daniel'].id },
@@ -227,6 +228,46 @@ async function main() {
   })
 
   await writeAuditLogSeed(admin.id, 'Seeded pilot demo data', 'Farm Bhade')
+
+  console.log('Seeding AI Crop Doctor history for the demo farmer...')
+
+  await prisma.cropDiagnosis.createMany({
+    data: [
+      {
+        userId: farmer.id,
+        imageUrl: '/uploads/demo/maize-leaf-healthy.jpg',
+        isCropPhoto: true,
+        condition: 'Healthy',
+        severity: 'healthy',
+        confidence: 96,
+        summary: 'Your maize leaves show strong, even green color with no visible lesions or discoloration.',
+        causes: [],
+        recommendations: ['Continue your current watering schedule', 'Scout weekly for early pest activity'],
+        preventionTips: ['Keep scouting weekly even while the crop looks healthy'],
+        yieldImpact: 'None expected — your crop is on track for a normal, healthy yield.',
+      },
+      {
+        userId: farmer.id,
+        imageUrl: '/uploads/demo/maize-leaf-rust.jpg',
+        isCropPhoto: true,
+        condition: 'Common Rust',
+        severity: 'moderate',
+        confidence: 88,
+        summary: 'Small reddish-brown pustules detected on the leaf surface, consistent with common rust.',
+        causes: [
+          'A fungus favored by cool, humid conditions with heavy dew.',
+          'Dense planting that keeps leaves wet longer after rainfall.',
+        ],
+        recommendations: [
+          'Apply a recommended fungicide within the next 3-5 days',
+          'Remove and destroy heavily infected leaves',
+          'Improve field airflow by checking plant spacing',
+        ],
+        preventionTips: ['Choose a rust-tolerant variety next season', 'Avoid overhead watering late in the day'],
+        yieldImpact: 'Moderate — expect 10-15% yield loss if untreated before tasseling.',
+      },
+    ],
+  })
 
   console.log('Seeding notifications for the demo farmer...')
 

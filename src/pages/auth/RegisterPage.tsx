@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { User, Phone, Lock, MapPin, Sprout, ShoppingCart, Factory } from 'lucide-react'
+import { User, Phone, Lock, MapPin, Sprout, ShoppingCart, Factory, ShieldCheck } from 'lucide-react'
 import { AuthLayout } from '@/layouts/AuthLayout'
 import { Input } from '@/components/common/Input'
 import { Button } from '@/components/common/Button'
@@ -178,6 +178,12 @@ export default function RegisterPage() {
             {formError}
           </p>
         )}
+
+        <p className="flex items-start gap-2 rounded-md bg-surface-variant px-3.5 py-2.5 text-xs text-on-surface-variant">
+          <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" />
+          Your password is encrypted and your phone number is never shown publicly. Only your name, role and
+          district appear on listings.
+        </p>
 
         <Button type="submit" fullWidth size="lg" loading={isSubmitting}>
           Create account

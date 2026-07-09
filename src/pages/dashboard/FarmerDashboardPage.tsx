@@ -6,20 +6,27 @@ import {
   CloudSun,
   CheckCircle2,
   Circle,
+  Lock,
   Sprout,
   PlusCircle,
   Sun,
   CloudRain,
   Cloud,
   CloudDrizzle,
+  ArrowRight,
+  HeartPulse,
+  Lightbulb,
+  TrendingUp,
 } from 'lucide-react'
 import { DashboardLayout } from '@/layouts/DashboardLayout'
 import { Card } from '@/components/common/Card'
 import { Badge } from '@/components/common/Badge'
+import { Button } from '@/components/common/Button'
 import { SectionHeader } from '@/components/common/SectionHeader'
 import { LiveBadge } from '@/components/common/LiveBadge'
 import { PromoBanner } from '@/components/common/PromoBanner'
 import { MarqueeTicker } from '@/components/common/MarqueeTicker'
+import { ProgressBar } from '@/components/common/ProgressBar'
 import { useAuth } from '@/hooks/useAuth'
 import { useLivePrices } from '@/hooks/useLivePrices'
 import { ROUTES } from '@/constants/routes'
@@ -28,7 +35,8 @@ import * as notificationsService from '@/services/notificationsService'
 import * as cropDoctorService from '@/services/cropDoctorService'
 import * as marketPricesService from '@/services/marketPricesService'
 import * as weatherService from '@/services/weatherService'
-import { JOURNEY_STAGE_LABELS, JOURNEY_STAGES } from '@/constants/app'
+import * as usersService from '@/services/usersService'
+import { JOURNEY_STAGE_LABELS, JOURNEY_STAGE_DESCRIPTIONS, JOURNEY_STAGES } from '@/constants/app'
 import type { Notification } from '@/types/notification'
 import type { CropDiagnosis } from '@/types/cropDoctor'
 import type { MarketPriceEntry } from '@/types/marketPrice'
@@ -57,13 +65,26 @@ const actionTone = {
   tertiary: 'bg-tertiary-container text-on-tertiary-container',
 }
 
+const SEVERITY_SCORE: Record<string, number> = { healthy: 100, low: 75, moderate: 50, severe: 20 }
+
+function scoreLabel(score: number): { label: string; tone: 'primary' | 'secondary' | 'error' } {
+  if (score >= 80) return { label: 'Excellent', tone: 'primary' }
+  if (score >= 60) return { label: 'Good', tone: 'primary' }
+  if (score >= 40) return { label: 'Fair', tone: 'secondary' }
+  return { label: 'Needs attention', tone: 'error' }
+}
+
 export default function FarmerDashboardPage() {
-  const { user } = useAuth()
+  const { user, updateUser } = useAuth()
   const [tasks, setTasks] = useState(MOCK_TODAY_TASKS)
   const [weather, setWeather] = useState<WeatherSnapshot | null>(null)
   const [weatherError, setWeatherError] = useState(false)
-  const currentStage = JOURNEY_STAGES[1]
+  const [advancingStage, setAdvancingStage] = useState(false)
+  const currentStage = user?.journeyStage ?? 'planning'
+  const currentStageIndex = JOURNEY_STAGES.indexOf(currentStage)
+  const nextStage = JOURNEY_STAGES[currentStageIndex + 1]
   const [latestDiagnosis, setLatestDiagnosis] = useState<CropDiagnosis | null>(null)
+  const [diagnosisHistory, setDiagnosisHistory] = useState<CropDiagnosis[]>([])
   const [basePrices, setBasePrices] = useState<MarketPriceEntry[]>([])
   const { prices: livePrices, lastUpdated } = useLivePrices(basePrices)
   const topPrices = livePrices.slice(0, 4)
@@ -71,7 +92,10 @@ export default function FarmerDashboardPage() {
 
   useEffect(() => {
     notificationsService.listNotifications().then((result) => setRecentNotifications(result.slice(0, 3)))
-    cropDoctorService.getDiagnosisHistory().then((result) => setLatestDiagnosis(result[0] ?? null))
+    cropDoctorService.getDiagnosisHistory().then((result) => {
+      setLatestDiagnosis(result[0] ?? null)
+      setDiagnosisHistory(result)
+    })
     marketPricesService.listMarketPrices().then(setBasePrices)
     weatherService
       .getWeather(user?.district ?? 'Masindi')
@@ -81,6 +105,62 @@ export default function FarmerDashboardPage() {
 
   function toggleTask(id: string) {
     setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t)))
+  }
+
+  const recentDiagnoses = diagnosisHistory.filter((d) => d.severity).slice(0, 5)
+  const diagnosisScore = recentDiagnoses.length
+    ? Math.round(
+        recentDiagnoses.reduce((sum, d) => sum + (SEVERITY_SCORE[d.severity!] ?? 50), 0) / recentDiagnoses.length,
+      )
+    : 60
+  const taskScore = tasks.length ? Math.round((tasks.filter((t) => t.done).length / tasks.length) * 100) : 100
+  const journeyScore = Math.round((currentStageIndex / (JOURNEY_STAGES.length - 1)) * 100)
+  const farmHealthScore = Math.round(diagnosisScore * 0.4 + taskScore * 0.3 + journeyScore * 0.3)
+  const healthStatus = scoreLabel(farmHealthScore)
+
+  const insights: { icon: typeof Lightbulb; tone: 'primary' | 'secondary' | 'error'; text: string }[] = []
+  if (weather) {
+    insights.push({
+      icon: weather.condition === 'rainy' || weather.condition === 'storm' ? CloudRain : Sun,
+      tone: weather.condition === 'storm' ? 'error' : 'primary',
+      text: weather.advisory,
+    })
+  }
+  const topMover = [...livePrices].sort((a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent))[0]
+  if (topMover) {
+    const direction = topMover.changePercent >= 0 ? 'up' : 'down'
+    insights.push({
+      icon: TrendingUp,
+      tone: topMover.changePercent >= 0 ? 'primary' : 'secondary',
+      text: `${topMover.category} prices in ${topMover.district} are ${direction} ${Math.abs(topMover.changePercent)}% this week.`,
+    })
+  }
+  if (latestDiagnosis?.isCropPhoto && latestDiagnosis.severity) {
+    insights.push({
+      icon: Stethoscope,
+      tone: latestDiagnosis.severity === 'healthy' ? 'primary' : 'error',
+      text:
+        latestDiagnosis.severity === 'healthy'
+          ? 'Your last AI Crop Doctor check came back healthy — keep up the good work.'
+          : `Your last AI Crop Doctor check flagged ${latestDiagnosis.condition}. Review the treatment steps.`,
+    })
+  } else {
+    insights.push({
+      icon: Stethoscope,
+      tone: 'secondary',
+      text: "You haven't run an AI Crop Doctor check yet — snap a photo to catch problems early.",
+    })
+  }
+
+  async function handleAdvanceStage() {
+    if (!nextStage) return
+    setAdvancingStage(true)
+    try {
+      const updated = await usersService.updateJourneyStage(nextStage)
+      updateUser(updated)
+    } finally {
+      setAdvancingStage(false)
+    }
   }
 
   return (
@@ -109,6 +189,74 @@ export default function FarmerDashboardPage() {
           </Link>
         ))}
       </div>
+
+      {/* Farm Health Score */}
+      <Card className="mt-6">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+          <div className="flex shrink-0 items-center gap-3">
+            <span className="flex size-14 items-center justify-center rounded-full bg-primary-container text-on-primary-container">
+              <HeartPulse className="size-6" />
+            </span>
+            <div>
+              <p className="text-3xl font-extrabold text-on-surface">{farmHealthScore}</p>
+              <Badge tone={healthStatus.tone}>{healthStatus.label}</Badge>
+            </div>
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-bold text-on-surface">Farm Health Score</p>
+            <p className="text-xs text-on-surface-variant">
+              A quick read on how your farm is doing, based on crop health, task follow-through and season
+              progress.
+            </p>
+            <div className="mt-3 space-y-2.5">
+              <div>
+                <div className="mb-1 flex items-center justify-between text-xs text-on-surface-variant">
+                  <span>Crop health (AI diagnoses)</span>
+                  <span className="font-semibold text-on-surface">{diagnosisScore}</span>
+                </div>
+                <ProgressBar value={diagnosisScore} />
+              </div>
+              <div>
+                <div className="mb-1 flex items-center justify-between text-xs text-on-surface-variant">
+                  <span>Task follow-through</span>
+                  <span className="font-semibold text-on-surface">{taskScore}</span>
+                </div>
+                <ProgressBar value={taskScore} tone="secondary" />
+              </div>
+              <div>
+                <div className="mb-1 flex items-center justify-between text-xs text-on-surface-variant">
+                  <span>Season progress</span>
+                  <span className="font-semibold text-on-surface">{journeyScore}</span>
+                </div>
+                <ProgressBar value={journeyScore} tone="secondary" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* Today's Insights */}
+      <Card className="mt-6">
+        <SectionHeader title="Today's insights" />
+        <ul className="space-y-3">
+          {insights.map((insight, i) => {
+            const Icon = insight.icon
+            const tone = {
+              primary: 'bg-primary-container text-on-primary-container',
+              secondary: 'bg-secondary-container text-on-secondary-container',
+              error: 'bg-error-container text-on-error-container',
+            }[insight.tone]
+            return (
+              <li key={i} className="flex items-start gap-3">
+                <span className={cn('flex size-8 shrink-0 items-center justify-center rounded-full', tone)}>
+                  <Icon className="size-4" />
+                </span>
+                <p className="pt-1 text-sm text-on-surface-variant">{insight.text}</p>
+              </li>
+            )
+          })}
+        </ul>
+      </Card>
 
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Weather */}
@@ -142,28 +290,44 @@ export default function FarmerDashboardPage() {
 
         {/* Current stage */}
         <Card className="lg:col-span-2">
-          <SectionHeader title="Current farming stage" />
+          <SectionHeader title="Farm progress" />
           <div className="flex flex-wrap items-center gap-2">
-            {JOURNEY_STAGES.map((stage, i) => (
-              <div key={stage} className="flex items-center gap-2">
-                <span
-                  className={cn(
-                    'rounded-full px-3 py-1.5 text-xs font-bold',
-                    stage === currentStage
-                      ? 'bg-primary text-on-primary'
-                      : 'bg-surface-variant text-on-surface-variant',
-                  )}
-                >
-                  {JOURNEY_STAGE_LABELS[stage]}
-                </span>
-                {i < JOURNEY_STAGES.length - 1 && <span className="h-px w-4 bg-outline-variant" />}
-              </div>
-            ))}
+            {JOURNEY_STAGES.map((stage, i) => {
+              const isDone = i < currentStageIndex
+              const isCurrent = i === currentStageIndex
+              const isLocked = i > currentStageIndex
+              return (
+                <div key={stage} className="flex items-center gap-2">
+                  <span
+                    className={cn(
+                      'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold',
+                      isCurrent && 'bg-primary text-on-primary',
+                      isDone && 'bg-primary-container text-on-primary-container',
+                      isLocked && 'bg-surface-variant text-on-surface-variant',
+                    )}
+                  >
+                    {isDone && <CheckCircle2 className="size-3.5" />}
+                    {isLocked && <Lock className="size-3" />}
+                    {JOURNEY_STAGE_LABELS[stage]}
+                  </span>
+                  {i < JOURNEY_STAGES.length - 1 && <span className="h-px w-4 bg-outline-variant" />}
+                </div>
+              )
+            })}
           </div>
-          <p className="mt-4 text-sm text-on-surface-variant">
-            You&apos;re in the <span className="font-semibold text-on-surface">Growing</span> stage. Plot A is at
-            vegetative growth (V6) — keep scouting for pests weekly.
-          </p>
+          <p className="mt-4 text-sm text-on-surface-variant">{JOURNEY_STAGE_DESCRIPTIONS[currentStage]}</p>
+          {nextStage && (
+            <Button
+              size="sm"
+              variant="tonal"
+              loading={advancingStage}
+              onClick={handleAdvanceStage}
+              trailingIcon={<ArrowRight className="size-4" />}
+              className="mt-3"
+            >
+              Move to {JOURNEY_STAGE_LABELS[nextStage]}
+            </Button>
+          )}
         </Card>
       </div>
 

@@ -1,3 +1,5 @@
+import type { JourneyStage } from '@/constants/app'
+
 export type UserRole = 'farmer' | 'buyer' | 'processor' | 'admin'
 
 export interface User {
@@ -9,6 +11,7 @@ export interface User {
   isSuperAdmin?: boolean
   district: string
   avatarUrl?: string
+  journeyStage?: JourneyStage
   subscriptionTier: 'free' | 'premium'
   verified: boolean
   status?: 'active' | 'suspended' | 'pending'

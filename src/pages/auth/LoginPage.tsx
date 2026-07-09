@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { Phone, Lock } from 'lucide-react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Phone, Lock, Sparkles } from 'lucide-react'
 import { AuthLayout } from '@/layouts/AuthLayout'
 import { Input } from '@/components/common/Input'
 import { Button } from '@/components/common/Button'
@@ -11,8 +11,11 @@ import { dashboardRouteForRole } from '@/utils/roleRoutes'
 import { MOCK_PASSWORD } from '@/mocks/users'
 import { validatePhone } from '@/utils/validation'
 
+const DEMO_FARMER_PHONE = '+256701234567'
+
 export default function LoginPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { login } = useAuth()
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
@@ -20,6 +23,7 @@ export default function LoginPage() {
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isDemoLoading, setIsDemoLoading] = useState(false)
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -41,6 +45,28 @@ export default function LoginPage() {
       setIsSubmitting(false)
     }
   }
+
+  async function handleDemoLogin() {
+    setFormError(null)
+    setIsDemoLoading(true)
+    try {
+      const user = await login({ phone: DEMO_FARMER_PHONE, password: MOCK_PASSWORD })
+      navigate(dashboardRouteForRole(user.role), { replace: true })
+    } catch {
+      setFormError('Could not start the demo right now. Please try again.')
+    } finally {
+      setIsDemoLoading(false)
+    }
+  }
+
+  const autoDemoTriggered = useRef(false)
+  useEffect(() => {
+    if (searchParams.get('demo') === '1' && !autoDemoTriggered.current) {
+      autoDemoTriggered.current = true
+      handleDemoLogin()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
 
   return (
     <AuthLayout title="Welcome back" subtitle="Log in to continue growing with Farm Bhade">
@@ -90,9 +116,25 @@ export default function LoginPage() {
           Log in
         </Button>
 
-        <p className="rounded-md bg-surface-variant px-3.5 py-2.5 text-center text-xs text-on-surface-variant">
-          Demo tip: use <span className="font-semibold">+256701234567</span> with password{' '}
-          <span className="font-semibold">{MOCK_PASSWORD}</span>
+        <div className="flex items-center gap-3">
+          <div className="h-px flex-1 bg-outline-variant" />
+          <span className="text-xs font-semibold text-on-surface-variant">OR</span>
+          <div className="h-px flex-1 bg-outline-variant" />
+        </div>
+
+        <Button
+          type="button"
+          variant="outlined"
+          fullWidth
+          size="lg"
+          loading={isDemoLoading}
+          leadingIcon={<Sparkles className="size-4.5" />}
+          onClick={handleDemoLogin}
+        >
+          Explore instant demo
+        </Button>
+        <p className="text-center text-xs text-on-surface-variant">
+          No sign-up needed — jump straight into a fully populated farmer account.
         </p>
       </form>
 

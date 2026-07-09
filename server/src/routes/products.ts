@@ -87,6 +87,10 @@ const createSchema = z.object({
   district: z.string().min(2),
   description: z.string().min(5),
   imageUrl: z.string().url().optional(),
+  moisturePercent: z.number().min(0).max(100).optional(),
+  variety: z.string().min(1).optional(),
+  grade: z.string().min(1).optional(),
+  harvestDate: z.coerce.date().optional(),
 })
 
 productsRouter.post(
@@ -110,6 +114,10 @@ productsRouter.post(
         district: payload.district,
         description: payload.description,
         imageUrl: payload.imageUrl,
+        moisturePercent: payload.moisturePercent,
+        variety: payload.variety,
+        grade: payload.grade,
+        harvestDate: payload.harvestDate,
         sellerId: req.user!.id,
       },
       include: { seller: true },

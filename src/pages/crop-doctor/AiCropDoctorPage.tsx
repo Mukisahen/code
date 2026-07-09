@@ -200,8 +200,32 @@ export default function AiCropDoctorPage() {
                 <p className="mt-1 text-xs text-on-surface-variant">{result.confidence}% confidence</p>
                 <p className="mt-3 text-sm text-on-surface">{result.summary}</p>
               </div>
+
+              {result.yieldImpact && (
+                <div className="rounded-md bg-surface-container px-3.5 py-2.5">
+                  <p className="text-xs font-bold uppercase tracking-wide text-on-surface-variant">
+                    Estimated yield impact
+                  </p>
+                  <p className="mt-1 text-sm text-on-surface">{result.yieldImpact}</p>
+                </div>
+              )}
+
+              {!!result.causes?.length && (
+                <div>
+                  <p className="mb-2 text-sm font-bold text-on-surface">Likely causes</p>
+                  <ul className="space-y-2">
+                    {result.causes.map((cause, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm text-on-surface-variant">
+                        <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-tertiary" />
+                        {cause}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               <div>
-                <p className="mb-2 text-sm font-bold text-on-surface">Recommendations</p>
+                <p className="mb-2 text-sm font-bold text-on-surface">Treatment steps</p>
                 <ul className="space-y-2">
                   {result.recommendations.map((rec, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm text-on-surface-variant">
@@ -211,6 +235,21 @@ export default function AiCropDoctorPage() {
                   ))}
                 </ul>
               </div>
+
+              {!!result.preventionTips?.length && (
+                <div>
+                  <p className="mb-2 text-sm font-bold text-on-surface">Prevention tips</p>
+                  <ul className="space-y-2">
+                    {result.preventionTips.map((tip, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm text-on-surface-variant">
+                        <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-secondary" />
+                        {tip}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               <Button variant="outlined" leadingIcon={<RotateCcw className="size-4" />} onClick={reset}>
                 Diagnose another photo
               </Button>

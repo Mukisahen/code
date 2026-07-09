@@ -6,6 +6,7 @@ import { LoadingScreen } from '@/components/common/LoadingScreen'
 
 const SplashScreen = lazy(() => import('@/pages/SplashScreen'))
 const LandingPage = lazy(() => import('@/pages/landing/LandingPage'))
+const AboutPage = lazy(() => import('@/pages/about/AboutPage'))
 const OnboardingPage = lazy(() => import('@/pages/onboarding/OnboardingPage'))
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage'))
 const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'))
@@ -55,6 +56,7 @@ export function AppRoutes() {
         <Route path={ROUTES.login} element={<LoginPage />} />
         <Route path={ROUTES.register} element={<RegisterPage />} />
         <Route path={ROUTES.forgotPassword} element={<ForgotPasswordPage />} />
+        <Route path={ROUTES.about} element={<AboutPage />} />
 
         <Route
           path={ROUTES.farmerDashboard}
