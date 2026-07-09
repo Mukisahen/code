@@ -39,6 +39,11 @@ services:
         value: https://farm-bhade-pwa.onrender.com,https://localhost,http://localhost
       - key: PUBLIC_UPLOADS_BASE_URL
         value: https://farm-bhade-api.onrender.com/uploads
+      # Optional: powers the Ask AI chatbot with real Claude responses instead
+      # of the local keyword-matched FAQ fallback. Get a key from
+      # https://console.anthropic.com/ and add it here.
+      # - key: ANTHROPIC_API_KEY
+      #   value: "your-anthropic-api-key"
       # Set these two temporarily to bootstrap the real supreme admin on first
       # deploy (see server/README.md), then delete them and redeploy — do not
       # leave a real password sitting in the dashboard long-term.

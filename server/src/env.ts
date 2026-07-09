@@ -34,4 +34,7 @@ export const env = {
   // skipped and admin-entered prices remain the only source — see
   // lib/marketPriceFeed.ts.
   alphaVantageApiKey: process.env.ALPHA_VANTAGE_API_KEY,
+  // Optional: without this, the Ask AI chatbot falls back to the frontend's
+  // local keyword-matched FAQ — see lib/claudeAssistant.ts.
+  anthropicApiKey: process.env.ANTHROPIC_API_KEY,
 }

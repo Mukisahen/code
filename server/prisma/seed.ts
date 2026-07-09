@@ -90,6 +90,15 @@ async function main() {
     { fullName: 'Nabatanzi Joan', phone: '+256701111005', district: 'Luwero', rating: 4.1, totalSales: 5 },
     { fullName: 'Wasswa Ronald', phone: '+256701111006', district: 'Iganga', rating: 4.5, totalSales: 20 },
     { fullName: 'Nalubega Sarah', phone: '+256701111007', district: 'Mukono', rating: 4.7, totalSales: 22 },
+    { fullName: 'Baluku Yusuf', phone: '+256701111008', district: 'Kasese', rating: 4.6, totalSales: 27 },
+    { fullName: 'Nabirye Justine', phone: '+256701111009', district: 'Mayuge', rating: 4.3, totalSales: 11 },
+    { fullName: 'Ssemwogerere John', phone: '+256701111010', district: 'Kayunga', rating: 4.5, totalSales: 19 },
+    { fullName: 'Kyomuhendo Grace', phone: '+256701111011', district: 'Ntungamo', rating: 4.8, totalSales: 33 },
+    { fullName: 'Mugisa Patrick', phone: '+256701111012', district: 'Kibaale', rating: 4.2, totalSales: 8 },
+    { fullName: 'Nakawesa Betty', phone: '+256701111013', district: 'Nakaseke', rating: 4.4, totalSales: 14 },
+    { fullName: 'Okwir Simon', phone: '+256701111014', district: 'Serere', rating: 4.6, totalSales: 24 },
+    { fullName: 'Achieng Florence', phone: '+256701111015', district: 'Gulu', rating: 4.7, totalSales: 29 },
+    { fullName: 'Otim Geoffrey', phone: '+256701111016', district: 'Kitgum', rating: 4.1, totalSales: 6 },
   ]
 
   const farmers: Record<string, Awaited<ReturnType<typeof prisma.user.upsert>>> = {}
@@ -122,6 +131,15 @@ async function main() {
     { title: 'Certified Seed Maize — Longe 7H', category: 'seed_maize', pricePerUnit: 6500, unit: 'kg', quantityAvailable: 1500, district: 'Kapchorwa', description: 'High-yield certified hybrid seed maize, sourced from NARO-approved stock.', sellerId: farmers['Byaruhanga Peter'].id, featured: true },
     { title: 'Dry Grain Maize — Grade B', category: 'dry_grain', pricePerUnit: 1300, unit: 'bag_100kg', quantityAvailable: 60, district: 'Mubende', description: 'Good quality dry maize grain, bagged and ready for bulk transport.', sellerId: farmers['Opio Daniel'].id },
     { title: 'Wet Maize — Fresh from Mukono', category: 'wet_maize', pricePerUnit: 950, unit: 'kg', quantityAvailable: 2500, district: 'Mukono', description: 'Freshly harvested wet maize from Lake Victoria basin farms, ideal for quick drying or processing.', sellerId: farmers['Ssali Ronald'].id, featured: true },
+    { title: 'Dry Grain Maize — Rwenzori Highlands', category: 'dry_grain', pricePerUnit: 1400, unit: 'kg', quantityAvailable: 4500, district: 'Kasese', description: 'Well-dried maize grain grown in the cooler Rwenzori foothills, low aflatoxin risk.', sellerId: farmers['Baluku Yusuf'].id, variety: 'Longe 10H', grade: 'Grade 1', moisturePercent: 13, harvestDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000) },
+    { title: 'Green Maize — Mayuge Lakeside', category: 'green_maize', pricePerUnit: 750, unit: 'cob', quantityAvailable: 900, district: 'Mayuge', description: 'Sweet green maize from the Lake Victoria shoreline, harvested this week.', sellerId: farmers['Nabirye Justine'].id },
+    { title: 'Dry Grain Maize — Kayunga Bulk', category: 'dry_grain', pricePerUnit: 1350, unit: 'bag_100kg', quantityAvailable: 45, district: 'Kayunga', description: 'Bulk-bagged dry grain, ready for transport, consistent moisture content across the batch.', sellerId: farmers['Ssemwogerere John'].id },
+    { title: 'Certified Seed Maize — Ntungamo', category: 'seed_maize', pricePerUnit: 6800, unit: 'kg', quantityAvailable: 800, district: 'Ntungamo', description: 'NARO-certified hybrid seed maize from a verified seed multiplication farm.', sellerId: farmers['Kyomuhendo Grace'].id, featured: true, variety: 'Longe 7H', grade: 'Certified', moisturePercent: 11 },
+    { title: 'Wet Maize — Kibaale Fresh Harvest', category: 'wet_maize', pricePerUnit: 880, unit: 'kg', quantityAvailable: 1800, district: 'Kibaale', description: 'Freshly picked wet maize, ideal for immediate milling or drying.', sellerId: farmers['Mugisa Patrick'].id },
+    { title: 'Dry Maize Cobs — Nakaseke', category: 'dry_cobs', pricePerUnit: 580, unit: 'cob', quantityAvailable: 2200, district: 'Nakaseke', description: 'Sun-dried cobs, good for animal feed or seed selection.', sellerId: farmers['Nakawesa Betty'].id },
+    { title: 'Dry Grain Maize — Serere Grade A', category: 'dry_grain', pricePerUnit: 1420, unit: 'kg', quantityAvailable: 6000, district: 'Serere', description: 'Clean, well-sorted dry grain from the Teso sub-region, tested moisture content.', sellerId: farmers['Okwir Simon'].id, variety: 'Longe 5', grade: 'Grade A', moisturePercent: 12.5 },
+    { title: 'Wet Maize — Gulu Bulk Supply', category: 'wet_maize', pricePerUnit: 870, unit: 'kg', quantityAvailable: 3200, district: 'Gulu', description: 'Bulk wet maize from the northern growing belt, available for immediate pickup.', sellerId: farmers['Achieng Florence'].id, featured: true },
+    { title: 'Roasted Maize — Kitgum Market Ready', category: 'roasted_maize', pricePerUnit: 900, unit: 'cob', quantityAvailable: 400, district: 'Kitgum', description: 'Freshly roasted maize cobs, ready for local market vendors.', sellerId: farmers['Otim Geoffrey'].id },
   ] as const
 
   const products: Awaited<ReturnType<typeof prisma.product.create>>[] = []
@@ -181,6 +199,16 @@ async function main() {
       { district: 'Luwero', category: 'Dry Grain', pricePerKg: 1380, changePercent: 0.4 },
       { district: 'Kiboga', category: 'Wet Maize', pricePerKg: 895, changePercent: -0.6 },
       { district: 'Mukono', category: 'Dry Grain', pricePerKg: 1405, changePercent: 1.8 },
+      { district: 'Kasese', category: 'Dry Grain', pricePerKg: 1395, changePercent: 2.6 },
+      { district: 'Mayuge', category: 'Green Maize', pricePerKg: 760, changePercent: -1.1 },
+      { district: 'Kayunga', category: 'Dry Grain', pricePerKg: 1345, changePercent: 0.9 },
+      { district: 'Ntungamo', category: 'Seed Maize', pricePerKg: 6750, changePercent: 3.8 },
+      { district: 'Kamwenge', category: 'Dry Grain', pricePerKg: 1330, changePercent: -0.9 },
+      { district: 'Kibaale', category: 'Wet Maize', pricePerKg: 875, changePercent: 1.4 },
+      { district: 'Nakaseke', category: 'Dry Cobs', pricePerKg: 590, changePercent: 0.6 },
+      { district: 'Serere', category: 'Dry Grain', pricePerKg: 1415, changePercent: 3.1 },
+      { district: 'Gulu', category: 'Wet Maize', pricePerKg: 860, changePercent: -0.4 },
+      { district: 'Kitgum', category: 'Roasted Maize', pricePerKg: 890, changePercent: 1.2 },
     ],
     skipDuplicates: true,
   })

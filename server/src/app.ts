@@ -19,6 +19,7 @@ import { districtsRouter } from './routes/districts.js'
 import { usersRouter } from './routes/users.js'
 import { adminRouter } from './routes/admin.js'
 import { ticketsRouter } from './routes/tickets.js'
+import { chatbotRouter } from './routes/chatbot.js'
 
 export function createApp() {
   const app = express()
@@ -51,6 +52,7 @@ export function createApp() {
   app.use('/api/districts', districtsRouter)
   app.use('/api/admin', adminRouter)
   app.use('/api/tickets', ticketsRouter)
+  app.use('/api/chatbot', chatbotRouter)
 
   app.use((_req, res) => res.status(404).json({ error: 'Not found' }))
   app.use(errorHandler)

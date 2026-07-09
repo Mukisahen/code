@@ -16,6 +16,8 @@ curated diagnosis), market prices, real weather (Open-Meteo), and the admin back
 - **Weather**: [Open-Meteo](https://open-meteo.com) (free, no API key), cached 1 hour per district
 - **Market prices**: admin-entered, plus an optional automatic daily nudge from a global
   commodity feed — see "Automatic market prices" below
+- **Ask AI chatbot**: powered by Claude when `ANTHROPIC_API_KEY` is set, with an optional
+  local keyword-matched FAQ fallback — see "Ask AI chatbot" below
 
 ## Local development
 
@@ -141,6 +143,18 @@ Without the key, this is a complete no-op — prices stay exactly as admins ente
 logged once at startup as `{ skipped: '...' }`. The fetch is wrapped so a network
 failure, missing key, or unexpected API response never crashes the server; it's
 treated identically to "no update this run."
+
+## Ask AI chatbot
+
+The farmer-facing "Ask AI" tab (in AI Crop Doctor) calls `POST /api/chatbot/ask`, which
+uses the Claude API (`src/lib/claudeAssistant.ts`) to answer farming questions in English
+or Luganda, grounded in a short Uganda-maize-farming knowledge base
+(`src/lib/maizeKnowledge.ts` — varieties, planting, pests, storage, selling advice).
+
+If `ANTHROPIC_API_KEY` is unset, or the Claude call fails for any reason, the endpoint
+returns `{ reply: null }` and the frontend transparently falls back to its local
+keyword-matched FAQ (`src/mocks/chatbotFaq.ts`) — the chatbot always responds, with or
+without a Claude key configured.
 
 ## Known limitations (pilot scope)
 

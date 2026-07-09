@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
-import { ArrowLeft, Send, MessageCircle, Users, MapPin } from 'lucide-react'
+import { ArrowLeft, Send, MessageCircle, Users, MapPin, X } from 'lucide-react'
 import { DashboardLayout } from '@/layouts/DashboardLayout'
 import { Avatar } from '@/components/common/Avatar'
 import { Button } from '@/components/common/Button'
 import { EmptyState } from '@/components/common/EmptyState'
 import { InlineSpinner } from '@/components/common/InlineSpinner'
+import { ChatBubble, parseQuoted } from '@/components/messages/ChatBubble'
 import * as messagesService from '@/services/messagesService'
 import type { CommunityMember } from '@/services/messagesService'
 import type { ChatMessage, Conversation } from '@/types/message'
@@ -22,6 +23,7 @@ export default function MessagesPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [activeId, setActiveId] = useState<string | null>(null)
   const [draft, setDraft] = useState('')
+  const [replyTarget, setReplyTarget] = useState<ChatMessage | null>(null)
   const activeIdRef = useRef<string | null>(null)
 
   const active = conversations.find((c) => c.id === activeId)
@@ -74,13 +76,20 @@ export default function MessagesPage() {
   async function handleSend(event: FormEvent) {
     event.preventDefault()
     if (!draft.trim() || !activeId) return
-    const text = draft
+    const preview = draft
+    let text = draft
+    if (replyTarget) {
+      const quotedText = parseQuoted(replyTarget.text)?.text ?? replyTarget.text
+      const snippet = quotedText.length > 80 ? `${quotedText.slice(0, 80)}…` : quotedText
+      text = `> ${snippet}\n${draft}`
+    }
     setDraft('')
+    setReplyTarget(null)
 
     const sent = await messagesService.sendMessage(activeId, text)
     setMessages((prev) => [...prev, sent])
     setConversations((prev) =>
-      prev.map((c) => (c.id === activeId ? { ...c, lastMessage: text, lastMessageAt: sent.sentAt } : c)),
+      prev.map((c) => (c.id === activeId ? { ...c, lastMessage: preview, lastMessageAt: sent.sentAt } : c)),
     )
   }
 
@@ -131,7 +140,10 @@ export default function MessagesPage() {
                 conversations.map((c) => (
                   <button
                     key={c.id}
-                    onClick={() => setActiveId(c.id)}
+                    onClick={() => {
+                      setActiveId(c.id)
+                      setReplyTarget(null)
+                    }}
                     className={cn(
                       'flex w-full items-start gap-3 border-b border-outline-variant/40 p-4 text-left transition-colors hover:bg-surface-container',
                       activeId === c.id && 'bg-surface-container',
@@ -145,7 +157,9 @@ export default function MessagesPage() {
                           {formatRelativeTime(c.lastMessageAt)}
                         </span>
                       </div>
-                      <p className="truncate text-sm text-on-surface-variant">{c.lastMessage}</p>
+                      <p className="truncate text-sm text-on-surface-variant">
+                        {parseQuoted(c.lastMessage)?.text ?? c.lastMessage}
+                      </p>
                       {c.productContext && (
                         <p className="mt-0.5 truncate text-xs text-primary">{c.productContext}</p>
                       )}
@@ -193,7 +207,14 @@ export default function MessagesPage() {
           {active ? (
             <>
               <div className="flex items-center gap-3 border-b border-outline-variant/60 p-4">
-                <button onClick={() => setActiveId(null)} className="lg:hidden" aria-label="Back">
+                <button
+                  onClick={() => {
+                    setActiveId(null)
+                    setReplyTarget(null)
+                  }}
+                  className="lg:hidden"
+                  aria-label="Back"
+                >
                   <ArrowLeft className="size-5 text-on-surface-variant" />
                 </button>
                 <Avatar initials={active.participantInitials} imageUrl={active.participantAvatarUrl} size="sm" />
@@ -209,22 +230,36 @@ export default function MessagesPage() {
                     Say hello to {active.participantName.split(' ')[0]} to start the conversation.
                   </p>
                 ) : (
-                  messages.map((m) => (
-                    <div key={m.id} className={cn('flex', m.senderId === 'me' ? 'justify-end' : 'justify-start')}>
-                      <div
-                        className={cn(
-                          'max-w-[75%] rounded-lg px-3.5 py-2 text-sm',
-                          m.senderId === 'me'
-                            ? 'bg-primary text-on-primary'
-                            : 'bg-surface-container text-on-surface',
-                        )}
-                      >
-                        {m.text}
-                      </div>
-                    </div>
-                  ))
+                  <>
+                    <p className="pb-1 text-center text-xs text-on-surface-variant">
+                      Tip: swipe a message to the right to reply to it
+                    </p>
+                    {messages.map((m) => (
+                      <ChatBubble key={m.id} message={m} isMine={m.senderId === 'me'} onReply={setReplyTarget} />
+                    ))}
+                  </>
                 )}
               </div>
+
+              {replyTarget && (
+                <div className="flex items-center gap-2 border-t border-outline-variant/60 bg-surface-container px-4 py-2">
+                  <div className="min-w-0 flex-1 border-l-2 border-primary pl-2.5">
+                    <p className="text-xs font-semibold text-primary">
+                      Replying to {replyTarget.senderId === 'me' ? 'yourself' : active.participantName.split(' ')[0]}
+                    </p>
+                    <p className="truncate text-xs text-on-surface-variant">
+                      {parseQuoted(replyTarget.text)?.text ?? replyTarget.text}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setReplyTarget(null)}
+                    aria-label="Cancel reply"
+                    className="flex size-7 shrink-0 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface"
+                  >
+                    <X className="size-4" />
+                  </button>
+                </div>
+              )}
 
               <form onSubmit={handleSend} className="flex items-center gap-2 border-t border-outline-variant/60 p-3">
                 <input

@@ -88,7 +88,7 @@ export function AskAiChat() {
 
       <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto p-4">
         {messages.map((m) => (
-          <div key={m.id} className={cn('flex', m.role === 'user' ? 'justify-end' : 'justify-start')}>
+          <div key={m.id} className={cn('flex animate-bubble-in', m.role === 'user' ? 'justify-end' : 'justify-start')}>
             <div
               className={cn(
                 'max-w-[85%] rounded-lg px-3.5 py-2 text-sm leading-relaxed',
@@ -100,7 +100,7 @@ export function AskAiChat() {
           </div>
         ))}
         {isThinking && (
-          <div className="flex justify-start">
+          <div className="flex animate-bubble-in justify-start">
             <div className="flex items-center gap-2 rounded-lg bg-surface-container px-3.5 py-2 text-sm text-on-surface-variant">
               <Loader2 className="size-3.5 animate-spin" /> {lang === 'en' ? 'Thinking…' : 'Nfumiitiriza…'}
             </div>
