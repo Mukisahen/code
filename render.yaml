@@ -18,6 +18,7 @@ services:
     startCommand: >-
       sh -c "npx prisma migrate deploy &&
       (if [ -n \"$SUPER_ADMIN_PHONE\" ]; then npm run create-admin; fi) &&
+      npm run create-demo &&
       npm run start"
     healthCheckPath: /health
     envVars:

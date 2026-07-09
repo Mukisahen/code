@@ -15,6 +15,7 @@
     "prisma:deploy": "prisma migrate deploy",
     "seed": "tsx prisma/seed.ts",
     "create-admin": "tsx prisma/createSuperAdmin.ts",
+    "create-demo": "tsx prisma/createDemoAccount.ts",
     "lint": "oxlint"
   },
   "dependencies": {
