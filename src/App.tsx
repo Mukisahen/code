@@ -5,6 +5,7 @@ import { ToastProvider } from '@/context/ToastContext'
 import { AppRoutes } from '@/routes/AppRoutes'
 import { UpdatePrompt } from '@/components/common/UpdatePrompt'
 import { ToastContainer } from '@/components/common/ToastContainer'
+import { ErrorBoundary } from '@/components/common/ErrorBoundary'
 import { useSimulatedNotifications } from '@/hooks/useSimulatedNotifications'
 
 function AppShell() {
@@ -20,15 +21,17 @@ function AppShell() {
 
 function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <ToastProvider>
-          <BrowserRouter>
-            <AppShell />
-          </BrowserRouter>
-        </ToastProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <AuthProvider>
+          <ToastProvider>
+            <BrowserRouter>
+              <AppShell />
+            </BrowserRouter>
+          </ToastProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   )
 }
 

@@ -107,7 +107,25 @@ export default function ProfilePage() {
         </div>
       </Card>
 
-      {user.subscriptionTier === 'free' && (
+      <Card className="mb-5 p-0">
+        <Link
+          to={ROUTES.settings}
+          className="flex w-full items-center gap-3 px-5 py-4 text-left hover:bg-surface-container"
+        >
+          <Settings className="size-4.5 text-on-surface-variant" />
+          <span className="flex-1 text-sm font-semibold text-on-surface">Settings &amp; feedback</span>
+          <ChevronRight className="size-4 text-on-surface-variant" />
+        </Link>
+        <button
+          onClick={logout}
+          className="flex w-full items-center gap-3 border-t border-outline-variant/60 px-5 py-4 text-left text-error hover:bg-error-container/40"
+        >
+          <LogOut className="size-4.5" />
+          <span className="flex-1 text-sm font-semibold">Log out</span>
+        </button>
+      </Card>
+
+      {user.role !== 'admin' && user.subscriptionTier === 'free' && (
         <Card className="mb-5 flex flex-col items-center justify-between gap-3 bg-secondary-container/40 sm:flex-row">
           <div>
             <p className="font-semibold text-on-surface">Upgrade to Farm Bhade Premium</p>
@@ -153,21 +171,6 @@ export default function ProfilePage() {
           </Button>
         </form>
       </Card>
-
-      <Card className="mt-5 p-0">
-        <Link
-          to={ROUTES.settings}
-          className="flex w-full items-center gap-3 px-5 py-4 text-left hover:bg-surface-container"
-        >
-          <Settings className="size-4.5 text-on-surface-variant" />
-          <span className="flex-1 text-sm font-semibold text-on-surface">Settings &amp; feedback</span>
-          <ChevronRight className="size-4 text-on-surface-variant" />
-        </Link>
-      </Card>
-
-      <Button variant="outlined" fullWidth leadingIcon={<LogOut className="size-4.5" />} onClick={logout} className="mt-5">
-        Log out
-      </Button>
     </DashboardLayout>
   )
 }
