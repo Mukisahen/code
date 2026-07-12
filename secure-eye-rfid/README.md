@@ -51,20 +51,16 @@ secure-eye-rfid/
 1. **Database.** In phpMyAdmin or the MySQL CLI:
    ```sql
    SOURCE database/schema.sql;
-   ```
-2. **Generate real password hashes** — the seed file ships with placeholder
-   hashes that will not authenticate. For each demo account, run:
-   ```
-   php backend/scripts/hash_password.php "SecureEye@2026"
-   ```
-   and paste the output into `database/seed.sql` (or update the `users` rows
-   directly) before running:
-   ```sql
    SOURCE database/seed.sql;
    ```
-   The RFID kiosk account (`scanner@berecah.sc.ug`) uses password `scan123`
-   in the demo script — hash that separately.
-3. **Backend config.** Set environment variables (Apache vhost, `.env`, or
+   `seed.sql` ships with real bcrypt hashes for the demo passwords below, so
+   the demo logins work immediately for local/offline use. Before using this
+   project anywhere beyond a local demo, rotate every demo password and
+   regenerate its hash with:
+   ```
+   php backend/scripts/hash_password.php "<new-password>"
+   ```
+2. **Backend config.** Set environment variables (Apache vhost, `.env`, or
    `php.ini`) before serving:
    ```
    SECUREEYE_DB_HOST=127.0.0.1
@@ -75,10 +71,10 @@ secure-eye-rfid/
    SECUREEYE_CORS_ORIGINS=http://localhost:8080
    ```
    Never commit real secrets — `config.php` only reads from the environment.
-4. **Serve the backend** at, e.g., `http://localhost/secure-eye-rfid/backend`
+3. **Serve the backend** at, e.g., `http://localhost/secure-eye-rfid/backend`
    (Apache `mod_rewrite` must be enabled for `.htaccess` to route `/api/*`
    to `index.php`).
-5. **Serve the frontend** as static files. If the API isn't at
+4. **Serve the frontend** as static files. If the API isn't at
    `http://localhost/secure-eye-rfid/backend/api`, set the base URL before
    `api.js` loads:
    ```html
@@ -115,13 +111,19 @@ Regenerate these hashes locally before any real deployment — see step 2 above.
 - Role-based access control enforced per-endpoint (`Auth::requireRole`).
 - Every write/auth action is recorded in `audit_logs` (user, IP, timestamp).
 
+## Live map
+
+Admin, coordinator and parent dashboards embed a Leaflet map
+(`assets/js/fleet-map.js`) using OpenStreetMap tiles — no API key required.
+Admin/coordinator see every vehicle's last GPS ping; parents see their
+child's bus (live position + recent scan points) after looking up a student
+ID. Markers refresh every 15 seconds.
+
 ## Known limitations / next steps
 
 - Driver incident reporting is a UI stub — not yet persisted to the database.
 - SMS sending via Africa's Talking is wired but disabled by default
   (`SECUREEYE_SMS_ENABLED=false`); enable once you have real API credentials.
-- No live map (Leaflet/Google Maps) is wired in yet — vehicle coordinates are
-  shown as raw lat/lng pending a mapping library integration.
 - This is a pilot/demo build for the ICT final year project; harden further
   (rate limiting, HTTPS enforcement, input length limits) before any
   production rollout beyond Berecah Primary School.

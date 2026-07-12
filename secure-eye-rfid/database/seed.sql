@@ -1,20 +1,20 @@
 -- Secure Eye demo seed data — Berecah Primary School, Namataba, Mukono District
--- Password for ALL demo accounts below is: SecureEye@2026 (except the scanner kiosk, see note)
--- Hashes are bcrypt (cost 12) placeholders — regenerate with backend/scripts/hash_password.php before real use.
+-- Password for demo accounts below is: SecureEye@2026 (except the scanner kiosk: scan123)
+-- Hashes are real bcrypt (cost 12) digests of those demo passwords, generated with
+-- backend/scripts/hash_password.php. Regenerate (and rotate the passwords) before
+-- using this project anywhere but a local/offline demo.
 
 USE secure_eye;
 
 INSERT INTO schools (id, name, district, address) VALUES
     (1, 'Berecah Primary School', 'Mukono District', 'Namataba, Mukono District, Uganda');
 
--- password_hash values below are bcrypt('SecureEye@2026') / bcrypt('scan123')
--- generate real hashes locally: php backend/scripts/hash_password.php SecureEye@2026
 INSERT INTO users (id, school_id, name, email, password_hash, role, phone) VALUES
-    (1, 1, 'Admin User',        'admin@berecah.ug',        '$2y$12$REPLACE_WITH_REAL_BCRYPT_HASH', 'admin', '+256700000001'),
-    (2, 1, 'Coordinator User',  'coordinator@berecah.ug',  '$2y$12$REPLACE_WITH_REAL_BCRYPT_HASH', 'coordinator', '+256700000002'),
-    (3, 1, 'Peter Ssebunya',    'peter@berecah.ug',        '$2y$12$REPLACE_WITH_REAL_BCRYPT_HASH', 'driver', '+256700000003'),
-    (4, 1, 'Jane Nakato',       'jane@example.com',        '$2y$12$REPLACE_WITH_REAL_BCRYPT_HASH', 'parent', '+256700000004'),
-    (5, 1, 'Bus Gate Scanner',  'scanner@berecah.sc.ug',   '$2y$12$REPLACE_WITH_REAL_BCRYPT_HASH', 'scanner', NULL);
+    (1, 1, 'Admin User',        'admin@berecah.ug',        '$2y$12$/hK1Xi7LvfyNuke6Zg6apeL.DVn0SyWHbVFbG6ROvMierjtbIUCKi', 'admin', '+256700000001'),
+    (2, 1, 'Coordinator User',  'coordinator@berecah.ug',  '$2y$12$/hK1Xi7LvfyNuke6Zg6apeL.DVn0SyWHbVFbG6ROvMierjtbIUCKi', 'coordinator', '+256700000002'),
+    (3, 1, 'Peter Ssebunya',    'peter@berecah.ug',        '$2y$12$/hK1Xi7LvfyNuke6Zg6apeL.DVn0SyWHbVFbG6ROvMierjtbIUCKi', 'driver', '+256700000003'),
+    (4, 1, 'Jane Nakato',       'jane@example.com',        '$2y$12$/hK1Xi7LvfyNuke6Zg6apeL.DVn0SyWHbVFbG6ROvMierjtbIUCKi', 'parent', '+256700000004'),
+    (5, 1, 'Bus Gate Scanner',  'scanner@berecah.sc.ug',   '$2y$12$4/cRQX6KkCnlV7b1h2EIEO90ruFaV3yCKtwv21c.Y4bRiFZkkUKVq', 'scanner', NULL);
 
 INSERT INTO drivers (id, user_id, license_no) VALUES
     (1, 3, 'DL-UG-00931');

@@ -52,7 +52,8 @@ function studentHistory(mysqli $db, array $user, int $studentId): void
     }
 
     $stmt = $db->prepare(
-        'SELECT te.id, te.event_type, te.lat, te.lng, te.event_time, v.plate_number
+        'SELECT te.id, te.event_type, te.lat, te.lng, te.event_time,
+                v.id AS vehicle_id, v.plate_number, v.last_lat, v.last_lng, v.last_ping_at
          FROM tracking_events te JOIN vehicles v ON v.id = te.vehicle_id
          WHERE te.student_id = ? ORDER BY te.event_time DESC LIMIT 100'
     );
