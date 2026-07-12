@@ -12,6 +12,8 @@ Mukisa Henry (System Architect & Admin Backend) · Ibrahim (Database Design &
 API Development) · Baker (Frontend Dashboards) · Clovis (Hardware & RFID
 Integration) · Moses (Testing, Docs & Presentation)
 
+Full project report: [`docs/ICT_GROUP_56_FINAL.docx`](docs/ICT_GROUP_56_FINAL.docx)
+
 ## Architecture
 
 ```
@@ -26,6 +28,8 @@ SMS        Africa's Talking (MTN/Airtel), optional — falls back to in-app only
 
 ```
 secure-eye-rfid/
+├── docs/
+│   └── ICT_GROUP_56_FINAL.docx  # Full final year project report
 ├── database/
 │   ├── schema.sql       # 12 tables: schools, users, students, vehicles, routes, ...
 │   └── seed.sql         # Demo data for Berecah Primary School
