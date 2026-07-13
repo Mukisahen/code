@@ -21,28 +21,26 @@ if ($method === 'GET' && $id === null) {
     Response::error('Not found', 404);
 }
 
-function listForParent(mysqli $db, array $user): void
+function listForParent(PDO $db, array $user): void
 {
     $stmt = $db->prepare(
         'SELECT n.id, n.channel, n.message, n.status, n.sent_at, n.read_at, n.created_at
          FROM notifications n JOIN parents p ON p.id = n.parent_id
          WHERE p.user_id = ? ORDER BY n.created_at DESC LIMIT 100'
     );
-    $stmt->bind_param('i', $user['sub']);
-    $stmt->execute();
-    Response::json($stmt->get_result()->fetch_all(MYSQLI_ASSOC));
+    $stmt->execute([$user['sub']]);
+    Response::json($stmt->fetchAll());
 }
 
-function markRead(mysqli $db, array $user, int $notificationId): void
+function markRead(PDO $db, array $user, int $notificationId): void
 {
     $stmt = $db->prepare(
         'UPDATE notifications n JOIN parents p ON p.id = n.parent_id
          SET n.read_at = NOW() WHERE n.id = ? AND p.user_id = ?'
     );
-    $stmt->bind_param('ii', $notificationId, $user['sub']);
-    $stmt->execute();
+    $stmt->execute([$notificationId, $user['sub']]);
 
-    $stmt->affected_rows > 0
+    $stmt->rowCount() > 0
         ? Response::json(['status' => 'read'])
         : Response::error('Notification not found', 404);
 }

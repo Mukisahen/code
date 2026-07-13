@@ -47,7 +47,7 @@
       <div class="card se-card p-3 mb-3">
         <h5>Add Student</h5>
         <form id="studentForm" class="row g-2">
-          <div class="col-md-3"><input class="form-control" name="rfid_uid" placeholder="RFID UID" required></div>
+          <div class="col-md-3"><input class="form-control" name="rfid_card_uid" placeholder="RFID Card UID" required></div>
           <div class="col-md-3"><input class="form-control" name="full_name" placeholder="Full name" required></div>
           <div class="col-md-2"><input class="form-control" name="class" placeholder="Class" required></div>
           <div class="col-md-2"><select class="form-select" name="route_id" id="studentRouteSelect"></select></div>
@@ -146,7 +146,7 @@
     async function loadStudents() {
       const students = await Api.students.list();
       document.getElementById('studentsTable').innerHTML = students.map((s) => `
-        <tr><td>${s.full_name}</td><td>${s.class}</td><td>${s.rfid_uid}</td>
+        <tr><td>${s.full_name}</td><td>${s.class}</td><td>${s.rfid_card_uid}</td>
         <td>${s.is_active ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Inactive</span>'}</td></tr>
       `).join('');
     }
@@ -188,7 +188,7 @@
       e.preventDefault();
       const fd = new FormData(e.target);
       await Api.students.create({
-        rfid_uid: fd.get('rfid_uid'),
+        rfid_card_uid: fd.get('rfid_card_uid'),
         full_name: fd.get('full_name'),
         class: fd.get('class'),
         route_id: fd.get('route_id') || null,

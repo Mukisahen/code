@@ -21,7 +21,7 @@ if ($method === 'POST' && $action === 'login') {
     Response::error('Not found', 404);
 }
 
-function login(mysqli $db, array $config): void
+function login(PDO $db, array $config): void
 {
     $input = json_decode(file_get_contents('php://input'), true) ?? [];
     $email = trim($input['email'] ?? '');
@@ -34,9 +34,8 @@ function login(mysqli $db, array $config): void
     $stmt = $db->prepare(
         'SELECT id, school_id, name, email, password_hash, role, is_active FROM users WHERE email = ?'
     );
-    $stmt->bind_param('s', $email);
-    $stmt->execute();
-    $user = $stmt->get_result()->fetch_assoc();
+    $stmt->execute([$email]);
+    $user = $stmt->fetch();
 
     if (!$user || !$user['is_active'] || !password_verify($password, $user['password_hash'])) {
         Audit::log($db, $user['id'] ?? null, 'login_failed', "email=$email");
@@ -54,10 +53,9 @@ function login(mysqli $db, array $config): void
     $expiresAt = date('Y-m-d H:i:s', time() + $config['jwt']['refresh_ttl_days'] * 86400);
 
     $stmt = $db->prepare(
-        'INSERT INTO refresh_tokens (user_id, token_hash, expires_at) VALUES (?, ?, ?)'
+        'INSERT INTO sessions (user_id, token_hash, expires_at) VALUES (?, ?, ?)'
     );
-    $stmt->bind_param('iss', $user['id'], $refreshHash, $expiresAt);
-    $stmt->execute();
+    $stmt->execute([$user['id'], $refreshHash, $expiresAt]);
 
     Audit::log($db, $user['id'], 'login_success');
 
@@ -74,7 +72,7 @@ function login(mysqli $db, array $config): void
     ]);
 }
 
-function refresh(mysqli $db, array $config): void
+function refresh(PDO $db, array $config): void
 {
     $input = json_decode(file_get_contents('php://input'), true) ?? [];
     $refreshToken = (string) ($input['refresh_token'] ?? '');
@@ -85,13 +83,12 @@ function refresh(mysqli $db, array $config): void
 
     $tokenHash = hash('sha256', $refreshToken);
     $stmt = $db->prepare(
-        'SELECT rt.id, rt.user_id, rt.expires_at, rt.revoked, u.role, u.school_id, u.is_active
-         FROM refresh_tokens rt JOIN users u ON u.id = rt.user_id
-         WHERE rt.token_hash = ?'
+        'SELECT s.id, s.user_id, s.expires_at, s.revoked, u.role, u.school_id, u.is_active
+         FROM sessions s JOIN users u ON u.id = s.user_id
+         WHERE s.token_hash = ?'
     );
-    $stmt->bind_param('s', $tokenHash);
-    $stmt->execute();
-    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->execute([$tokenHash]);
+    $row = $stmt->fetch();
 
     if (!$row || $row['revoked'] || !$row['is_active'] || strtotime($row['expires_at']) < time()) {
         Response::error('Invalid or expired refresh token', 401);
@@ -106,16 +103,15 @@ function refresh(mysqli $db, array $config): void
     Response::json(['access_token' => $accessToken, 'expires_in' => $config['jwt']['access_ttl_seconds']]);
 }
 
-function logout(mysqli $db): void
+function logout(PDO $db): void
 {
     $input = json_decode(file_get_contents('php://input'), true) ?? [];
     $refreshToken = (string) ($input['refresh_token'] ?? '');
 
     if ($refreshToken !== '') {
         $tokenHash = hash('sha256', $refreshToken);
-        $stmt = $db->prepare('UPDATE refresh_tokens SET revoked = 1 WHERE token_hash = ?');
-        $stmt->bind_param('s', $tokenHash);
-        $stmt->execute();
+        $stmt = $db->prepare('UPDATE sessions SET revoked = 1 WHERE token_hash = ?');
+        $stmt->execute([$tokenHash]);
     }
 
     Response::json(['status' => 'logged_out']);

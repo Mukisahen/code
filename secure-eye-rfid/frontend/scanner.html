@@ -78,7 +78,7 @@
         });
 
         const data = await Api.scan({
-          rfid_uid: rfidUid,
+          rfid_card_uid: rfidUid,
           vehicle_id: Number(vehicleSelect.value),
           event_type: document.getElementById('eventType').value,
           lat: geo.lat ?? null,
@@ -88,12 +88,20 @@
         scanCard.classList.add('se-scan-flash');
         setTimeout(() => scanCard.classList.remove('se-scan-flash'), 600);
 
-        resultBox.innerHTML = `
-          <div class="alert alert-success">
-            <strong>${data.student.full_name}</strong> (${data.student.class})<br>
-            ${data.event_type === 'board' ? 'Boarded' : 'Alighted'} — event #${data.event_id}<br>
-            ${data.notification ? `Parent notified: ${data.notification.status}` : 'No parent linked'}
-          </div>`;
+        if (data.duplicate) {
+          resultBox.innerHTML = `
+            <div class="alert alert-warning">
+              <strong>${data.student.full_name}</strong> (${data.student.class})<br>
+              ${data.message}
+            </div>`;
+        } else {
+          resultBox.innerHTML = `
+            <div class="alert alert-success">
+              <strong>${data.student.full_name}</strong> (${data.student.class})<br>
+              ${data.event_type === 'board' ? 'Boarded' : 'Alighted'} — event #${data.event_id}<br>
+              ${data.notification ? `Parent notified: ${data.notification.status}` : 'No parent linked'}
+            </div>`;
+        }
       } catch (err) {
         resultBox.innerHTML = `<div class="alert alert-danger">${err.message}</div>`;
       } finally {

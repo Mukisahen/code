@@ -7,7 +7,7 @@
 return [
     'db' => [
         'host' => getenv('SECUREEYE_DB_HOST') ?: '127.0.0.1',
-        'name' => getenv('SECUREEYE_DB_NAME') ?: 'secure_eye',
+        'name' => getenv('SECUREEYE_DB_NAME') ?: 'secureeye_db',
         'user' => getenv('SECUREEYE_DB_USER') ?: 'root',
         'pass' => getenv('SECUREEYE_DB_PASS') ?: '',
         'port' => (int) (getenv('SECUREEYE_DB_PORT') ?: 3306),

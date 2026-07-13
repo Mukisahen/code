@@ -1,7 +1,7 @@
 // Shared Leaflet helper for plotting vehicle/student GPS points.
 // Requires leaflet.js/leaflet.css to already be loaded on the page.
 
-const SECURE_EYE_MAP_CENTER = [0.3654, 32.7621]; // Namataba, Mukono District
+const SECURE_EYE_MAP_CENTER = [0.4021, 32.6610]; // Berecah Primary School, Kiira Municipality, Wakiso District
 
 function createFleetMap(elementId) {
   const map = L.map(elementId).setView(SECURE_EYE_MAP_CENTER, 13);

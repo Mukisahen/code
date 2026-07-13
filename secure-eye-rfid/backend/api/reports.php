@@ -24,7 +24,7 @@ if ($report === 'attendance') {
 }
 
 /** Daily boarding count per route for the last 7 days. */
-function attendance(mysqli $db, array $user): void
+function attendance(PDO $db, array $user): void
 {
     $stmt = $db->prepare(
         'SELECT DATE(te.event_time) AS day, r.name AS route_name, COUNT(*) AS boardings
@@ -35,13 +35,12 @@ function attendance(mysqli $db, array $user): void
          GROUP BY day, r.name
          ORDER BY day DESC'
     );
-    $stmt->bind_param('i', $user['school_id']);
-    $stmt->execute();
-    Response::json($stmt->get_result()->fetch_all(MYSQLI_ASSOC));
+    $stmt->execute([$user['school_id']]);
+    Response::json($stmt->fetchAll());
 }
 
 /** Trips and distinct students carried per vehicle over the last 30 days. */
-function fleetUtilisation(mysqli $db, array $user): void
+function fleetUtilisation(PDO $db, array $user): void
 {
     $stmt = $db->prepare(
         'SELECT v.plate_number, COUNT(*) AS scan_count, COUNT(DISTINCT te.student_id) AS unique_students
@@ -51,7 +50,6 @@ function fleetUtilisation(mysqli $db, array $user): void
          GROUP BY v.plate_number
          ORDER BY scan_count DESC'
     );
-    $stmt->bind_param('i', $user['school_id']);
-    $stmt->execute();
-    Response::json($stmt->get_result()->fetch_all(MYSQLI_ASSOC));
+    $stmt->execute([$user['school_id']]);
+    Response::json($stmt->fetchAll());
 }

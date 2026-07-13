@@ -31,22 +31,20 @@ switch ($method) {
         Response::error('Method not allowed', 405);
 }
 
-function getList(mysqli $db, array $user): void
+function getList(PDO $db, array $user): void
 {
     $stmt = $db->prepare(
         'SELECT id, name, schedule_time, vehicle_id FROM routes WHERE school_id = ? ORDER BY name'
     );
-    $stmt->bind_param('i', $user['school_id']);
-    $stmt->execute();
-    Response::json($stmt->get_result()->fetch_all(MYSQLI_ASSOC));
+    $stmt->execute([$user['school_id']]);
+    Response::json($stmt->fetchAll());
 }
 
-function getOne(mysqli $db, array $user, int $id): void
+function getOne(PDO $db, array $user, int $id): void
 {
     $stmt = $db->prepare('SELECT * FROM routes WHERE id = ? AND school_id = ?');
-    $stmt->bind_param('ii', $id, $user['school_id']);
-    $stmt->execute();
-    $route = $stmt->get_result()->fetch_assoc();
+    $stmt->execute([$id, $user['school_id']]);
+    $route = $stmt->fetch();
     if (!$route) {
         Response::error('Route not found', 404);
     }
@@ -54,14 +52,13 @@ function getOne(mysqli $db, array $user, int $id): void
     $stopsStmt = $db->prepare(
         'SELECT stop_name, sequence_no, lat, lng FROM route_stops WHERE route_id = ? ORDER BY sequence_no'
     );
-    $stopsStmt->bind_param('i', $id);
-    $stopsStmt->execute();
-    $route['stops'] = $stopsStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stopsStmt->execute([$id]);
+    $route['stops'] = $stopsStmt->fetchAll();
 
     Response::json($route);
 }
 
-function create(mysqli $db, array $user): void
+function create(PDO $db, array $user): void
 {
     $input = json_decode(file_get_contents('php://input'), true) ?? [];
     $name = trim($input['name'] ?? '');
@@ -75,14 +72,14 @@ function create(mysqli $db, array $user): void
     $stmt = $db->prepare(
         'INSERT INTO routes (school_id, name, schedule_time, vehicle_id) VALUES (?, ?, ?, ?)'
     );
-    $stmt->bind_param('issi', $user['school_id'], $name, $scheduleTime, $vehicleId);
-    $stmt->execute();
+    $stmt->execute([$user['school_id'], $name, $scheduleTime, $vehicleId]);
+    $id = (int) $db->lastInsertId();
 
-    Audit::log($db, $user['sub'], 'route_created', "id={$stmt->insert_id}");
-    Response::json(['id' => $stmt->insert_id], 201);
+    Audit::log($db, $user['sub'], 'route_created', "id=$id");
+    Response::json(['id' => $id], 201);
 }
 
-function update(mysqli $db, array $user, int $id): void
+function update(PDO $db, array $user, int $id): void
 {
     $input = json_decode(file_get_contents('php://input'), true) ?? [];
     $name = trim($input['name'] ?? '');
@@ -96,18 +93,16 @@ function update(mysqli $db, array $user, int $id): void
     $stmt = $db->prepare(
         'UPDATE routes SET name = ?, schedule_time = ?, vehicle_id = ? WHERE id = ? AND school_id = ?'
     );
-    $stmt->bind_param('ssiii', $name, $scheduleTime, $vehicleId, $id, $user['school_id']);
-    $stmt->execute();
+    $stmt->execute([$name, $scheduleTime, $vehicleId, $id, $user['school_id']]);
 
     Audit::log($db, $user['sub'], 'route_updated', "id=$id");
     Response::json(['status' => 'updated']);
 }
 
-function remove(mysqli $db, array $user, int $id): void
+function remove(PDO $db, array $user, int $id): void
 {
     $stmt = $db->prepare('DELETE FROM routes WHERE id = ? AND school_id = ?');
-    $stmt->bind_param('ii', $id, $user['school_id']);
-    $stmt->execute();
+    $stmt->execute([$id, $user['school_id']]);
 
     Audit::log($db, $user['sub'], 'route_deleted', "id=$id");
     Response::json(['status' => 'deleted']);

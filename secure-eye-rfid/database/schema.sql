@@ -1,8 +1,10 @@
 -- Secure Eye: RFID & GPS-Based Student Transport Monitoring System
--- MySQL 8 schema — 12 tables (11 core + audit_logs for the security audit trail)
+-- Final Year ICT Project (Project Code 56) — Berecah Primary School, Kiira
+-- Municipality, Wakiso District. MySQL 8 schema — 12 tables (the report's
+-- core 11 plus audit_logs for the security audit trail).
 
-CREATE DATABASE IF NOT EXISTS secure_eye CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE secure_eye;
+CREATE DATABASE IF NOT EXISTS secureeye_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE secureeye_db;
 
 -- 1. schools
 CREATE TABLE schools (
@@ -90,7 +92,7 @@ CREATE TABLE route_stops (
 CREATE TABLE students (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     school_id INT UNSIGNED NOT NULL,
-    rfid_uid VARCHAR(64) NOT NULL UNIQUE,
+    rfid_card_uid VARCHAR(64) NOT NULL UNIQUE,
     full_name VARCHAR(100) NOT NULL,
     class VARCHAR(30) NOT NULL,
     route_id INT UNSIGNED,
@@ -101,7 +103,7 @@ CREATE TABLE students (
     FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE CASCADE,
     FOREIGN KEY (route_id) REFERENCES routes(id) ON DELETE SET NULL,
     FOREIGN KEY (parent_id) REFERENCES parents(id) ON DELETE SET NULL,
-    INDEX idx_students_rfid (rfid_uid)
+    INDEX idx_students_rfid (rfid_card_uid)
 ) ENGINE=InnoDB;
 
 -- 9. tracking_events (every boarding/alighting scan with GPS)
@@ -137,8 +139,8 @@ CREATE TABLE notifications (
     INDEX idx_notifications_parent (parent_id, created_at)
 ) ENGINE=InnoDB;
 
--- 11. refresh_tokens
-CREATE TABLE refresh_tokens (
+-- 11. sessions (active JWT refresh tokens — enables per-token revocation and multi-device login)
+CREATE TABLE sessions (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id INT UNSIGNED NOT NULL,
     token_hash VARCHAR(255) NOT NULL,

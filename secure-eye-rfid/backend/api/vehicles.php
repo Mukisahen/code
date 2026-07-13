@@ -41,27 +41,25 @@ switch (true) {
         Response::error('Not found', 404);
 }
 
-function getList(mysqli $db, array $user): void
+function getList(PDO $db, array $user): void
 {
     $stmt = $db->prepare(
         'SELECT id, plate_number, capacity, driver_id, gps_device_id, last_lat, last_lng, last_ping_at
          FROM vehicles WHERE school_id = ? ORDER BY plate_number'
     );
-    $stmt->bind_param('i', $user['school_id']);
-    $stmt->execute();
-    Response::json($stmt->get_result()->fetch_all(MYSQLI_ASSOC));
+    $stmt->execute([$user['school_id']]);
+    Response::json($stmt->fetchAll());
 }
 
-function getOne(mysqli $db, array $user, int $id): void
+function getOne(PDO $db, array $user, int $id): void
 {
     $stmt = $db->prepare('SELECT * FROM vehicles WHERE id = ? AND school_id = ?');
-    $stmt->bind_param('ii', $id, $user['school_id']);
-    $stmt->execute();
-    $vehicle = $stmt->get_result()->fetch_assoc();
+    $stmt->execute([$id, $user['school_id']]);
+    $vehicle = $stmt->fetch();
     $vehicle ? Response::json($vehicle) : Response::error('Vehicle not found', 404);
 }
 
-function create(mysqli $db, array $user): void
+function create(PDO $db, array $user): void
 {
     $input = json_decode(file_get_contents('php://input'), true) ?? [];
     $plateNumber = trim($input['plate_number'] ?? '');
@@ -76,14 +74,14 @@ function create(mysqli $db, array $user): void
     $stmt = $db->prepare(
         'INSERT INTO vehicles (school_id, plate_number, capacity, driver_id, gps_device_id) VALUES (?, ?, ?, ?, ?)'
     );
-    $stmt->bind_param('isiis', $user['school_id'], $plateNumber, $capacity, $driverId, $gpsDeviceId);
-    $stmt->execute();
+    $stmt->execute([$user['school_id'], $plateNumber, $capacity, $driverId, $gpsDeviceId]);
+    $id = (int) $db->lastInsertId();
 
-    Audit::log($db, $user['sub'], 'vehicle_created', "id={$stmt->insert_id}");
-    Response::json(['id' => $stmt->insert_id], 201);
+    Audit::log($db, $user['sub'], 'vehicle_created', "id=$id");
+    Response::json(['id' => $id], 201);
 }
 
-function update(mysqli $db, array $user, int $id): void
+function update(PDO $db, array $user, int $id): void
 {
     $input = json_decode(file_get_contents('php://input'), true) ?? [];
     $plateNumber = trim($input['plate_number'] ?? '');
@@ -97,25 +95,23 @@ function update(mysqli $db, array $user, int $id): void
     $stmt = $db->prepare(
         'UPDATE vehicles SET plate_number = ?, capacity = ?, driver_id = ? WHERE id = ? AND school_id = ?'
     );
-    $stmt->bind_param('siiii', $plateNumber, $capacity, $driverId, $id, $user['school_id']);
-    $stmt->execute();
+    $stmt->execute([$plateNumber, $capacity, $driverId, $id, $user['school_id']]);
 
     Audit::log($db, $user['sub'], 'vehicle_updated', "id=$id");
     Response::json(['status' => 'updated']);
 }
 
-function remove(mysqli $db, array $user, int $id): void
+function remove(PDO $db, array $user, int $id): void
 {
     $stmt = $db->prepare('DELETE FROM vehicles WHERE id = ? AND school_id = ?');
-    $stmt->bind_param('ii', $id, $user['school_id']);
-    $stmt->execute();
+    $stmt->execute([$id, $user['school_id']]);
 
     Audit::log($db, $user['sub'], 'vehicle_deleted', "id=$id");
     Response::json(['status' => 'deleted']);
 }
 
 /** Vehicle GPS broadcast — driver's device pings this every ~30 seconds. */
-function ping(mysqli $db, array $user, int $id): void
+function ping(PDO $db, array $user, int $id): void
 {
     $input = json_decode(file_get_contents('php://input'), true) ?? [];
     $lat = $input['lat'] ?? null;
@@ -130,10 +126,9 @@ function ping(mysqli $db, array $user, int $id): void
          SET v.last_lat = ?, v.last_lng = ?, v.last_ping_at = NOW()
          WHERE v.id = ? AND d.user_id = ?'
     );
-    $stmt->bind_param('ddii', $lat, $lng, $id, $user['sub']);
-    $stmt->execute();
+    $stmt->execute([$lat, $lng, $id, $user['sub']]);
 
-    if ($stmt->affected_rows === 0) {
+    if ($stmt->rowCount() === 0) {
         Response::error('Vehicle not found or not assigned to this driver', 403);
     }
 

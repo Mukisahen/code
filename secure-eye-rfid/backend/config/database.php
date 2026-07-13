@@ -1,22 +1,25 @@
 <?php
-// Returns a shared mysqli connection. All callers use prepared statements —
+// Returns a shared PDO connection. All callers use prepared statements —
 // no query in this codebase concatenates user input into SQL.
 
-function db(): mysqli
+function db(): PDO
 {
-    static $conn = null;
+    static $pdo = null;
 
-    if ($conn !== null) {
-        return $conn;
+    if ($pdo !== null) {
+        return $pdo;
     }
 
     $config = require __DIR__ . '/config.php';
     $db = $config['db'];
 
-    mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+    $dsn = "mysql:host={$db['host']};port={$db['port']};dbname={$db['name']};charset=utf8mb4";
 
-    $conn = new mysqli($db['host'], $db['user'], $db['pass'], $db['name'], $db['port']);
-    $conn->set_charset('utf8mb4');
+    $pdo = new PDO($dsn, $db['user'], $db['pass'], [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES => false,
+    ]);
 
-    return $conn;
+    return $pdo;
 }

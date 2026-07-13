@@ -1,7 +1,7 @@
 <?php
 // Minimal dependency-free HS256 JWT encoder/decoder.
 // Access tokens are short-lived; refresh tokens are opaque random strings
-// stored (hashed) in the refresh_tokens table, not JWTs — see api/auth.php.
+// stored (hashed) in the sessions table, not JWTs — see api/auth.php.
 
 class Jwt
 {

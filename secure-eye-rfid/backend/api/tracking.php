@@ -25,18 +25,17 @@ if ($scope === 'vehicle' && $id !== null) {
     Response::error('Use /tracking/vehicle/{id} or /tracking/student/{id}', 404);
 }
 
-function vehicleLocation(mysqli $db, array $user, int $vehicleId): void
+function vehicleLocation(PDO $db, array $user, int $vehicleId): void
 {
     $stmt = $db->prepare(
         'SELECT id, plate_number, last_lat, last_lng, last_ping_at FROM vehicles WHERE id = ? AND school_id = ?'
     );
-    $stmt->bind_param('ii', $vehicleId, $user['school_id']);
-    $stmt->execute();
-    $vehicle = $stmt->get_result()->fetch_assoc();
+    $stmt->execute([$vehicleId, $user['school_id']]);
+    $vehicle = $stmt->fetch();
     $vehicle ? Response::json($vehicle) : Response::error('Vehicle not found', 404);
 }
 
-function studentHistory(mysqli $db, array $user, int $studentId): void
+function studentHistory(PDO $db, array $user, int $studentId): void
 {
     // Parents may only view their own child's history.
     if ($user['role'] === 'parent') {
@@ -44,9 +43,8 @@ function studentHistory(mysqli $db, array $user, int $studentId): void
             'SELECT s.id FROM students s JOIN parents p ON p.id = s.parent_id
              WHERE s.id = ? AND p.user_id = ?'
         );
-        $check->bind_param('ii', $studentId, $user['sub']);
-        $check->execute();
-        if (!$check->get_result()->fetch_assoc()) {
+        $check->execute([$studentId, $user['sub']]);
+        if (!$check->fetch()) {
             Response::error('Forbidden', 403);
         }
     }
@@ -57,7 +55,6 @@ function studentHistory(mysqli $db, array $user, int $studentId): void
          FROM tracking_events te JOIN vehicles v ON v.id = te.vehicle_id
          WHERE te.student_id = ? ORDER BY te.event_time DESC LIMIT 100'
     );
-    $stmt->bind_param('i', $studentId);
-    $stmt->execute();
-    Response::json($stmt->get_result()->fetch_all(MYSQLI_ASSOC));
+    $stmt->execute([$studentId]);
+    Response::json($stmt->fetchAll());
 }
