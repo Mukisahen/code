@@ -1,0 +1,45 @@
+:root {
+  --se-primary: #0d6efd;
+  --se-dark: #0b1f3a;
+}
+
+body {
+  background-color: #f5f7fb;
+}
+
+.se-navbar {
+  background-color: var(--se-dark);
+}
+
+.se-navbar .navbar-brand {
+  font-weight: 700;
+  color: #fff;
+}
+
+.se-card {
+  border: none;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+.se-stat-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.se-login-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--se-dark), var(--se-primary));
+}
+
+.se-scan-flash {
+  animation: se-flash 0.6s ease;
+}
+
+@keyframes se-flash {
+  0% { background-color: #d1e7dd; }
+  100% { background-color: transparent; }
+}

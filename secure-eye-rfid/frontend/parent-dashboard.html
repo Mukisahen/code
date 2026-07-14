@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Secure Eye — Parent Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet">
+  <link href="assets/css/style.css" rel="stylesheet">
+</head>
+<body>
+  <nav class="navbar navbar-dark se-navbar px-3">
+    <span class="navbar-brand">🛡️ Secure Eye — Parent</span>
+    <div>
+      <span class="text-white-50 me-3" id="userLabel"></span>
+      <button id="logoutBtn" class="btn btn-sm btn-outline-light">Logout</button>
+    </div>
+  </nav>
+
+  <main class="container py-4">
+    <div class="row g-4">
+      <div class="col-md-7">
+        <div class="card se-card p-3">
+          <h5>Notifications</h5>
+          <div id="notificationsList"></div>
+        </div>
+      </div>
+      <div class="col-md-5">
+        <div class="card se-card p-3">
+          <h5>Transport History</h5>
+          <p class="small text-muted">Select a child to view boarding/alighting history. Enter your child's student ID (shown on their RFID card record).</p>
+          <form id="studentLookup" class="d-flex gap-2 mb-3">
+            <input class="form-control" type="number" id="studentIdInput" placeholder="Student ID" required>
+            <button class="btn btn-primary">View</button>
+          </form>
+          <ul class="list-group" id="historyList"></ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card se-card p-3 mt-4">
+      <h5>Bus Location</h5>
+      <p class="small text-muted mb-2">Shows the live position of your child's bus (from its most recent GPS ping) plus recent scan points.</p>
+      <div id="childMap" style="height: 320px; border-radius: 0.5rem;"></div>
+    </div>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/fleet-map.js"></script>
+  <script>
+    const user = Session.requireRole(['parent']);
+    document.getElementById('userLabel').textContent = `${user.name} (${user.role})`;
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await Api.logout().catch(() => {});
+      Session.clear();
+      window.location.href = 'index.html';
+    });
+
+    async function loadNotifications() {
+      const notifications = await Api.notifications.list();
+      const list = document.getElementById('notificationsList');
+      if (notifications.length === 0) {
+        list.innerHTML = '<p class="text-muted">No notifications yet.</p>';
+        return;
+      }
+      list.innerHTML = notifications.map((n) => `
+        <div class="d-flex justify-content-between align-items-start border-bottom py-2 ${n.read_at ? '' : 'fw-semibold'}">
+          <div>
+            <div>${n.message}</div>
+            <small class="text-muted">${n.created_at} · ${n.channel.toUpperCase()} · ${n.status}</small>
+          </div>
+          ${n.read_at ? '' : `<button class="btn btn-sm btn-outline-secondary" data-id="${n.id}">Mark read</button>`}
+        </div>
+      `).join('');
+
+      list.querySelectorAll('button[data-id]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          await Api.notifications.markRead(btn.dataset.id);
+          loadNotifications();
+        });
+      });
+    }
+
+    const childMap = createFleetMap('childMap');
+    let lastLookupStudentId = null;
+
+    async function refreshChildTracking(studentId) {
+      const historyList = document.getElementById('historyList');
+      try {
+        const events = await Api.tracking.student(studentId);
+        historyList.innerHTML = events.length
+          ? events.map((ev) => `
+              <li class="list-group-item">
+                <strong>${ev.event_type === 'board' ? 'Boarded' : 'Alighted'}</strong> — ${ev.plate_number}<br>
+                <small class="text-muted">${ev.event_time}</small>
+              </li>`).join('')
+          : '<li class="list-group-item text-muted">No events recorded yet.</li>';
+
+        const activeKeys = new Set();
+        events.forEach((ev) => {
+          if (ev.lat == null || ev.lng == null) return;
+          const key = `event-${ev.id}`;
+          activeKeys.add(key);
+          childMap.upsertMarker(key, ev.lat, ev.lng, `${ev.event_type} — ${ev.plate_number}<br><small>${ev.event_time}</small>`);
+        });
+        if (events[0] && events[0].last_lat != null && events[0].last_lng != null) {
+          activeKeys.add('live-bus');
+          childMap.upsertMarker('live-bus', events[0].last_lat, events[0].last_lng,
+            `🚌 ${events[0].plate_number} (live)<br><small>${events[0].last_ping_at || ''}</small>`);
+        }
+        childMap.removeStale(activeKeys);
+        if (activeKeys.size > 0) childMap.fitToMarkers();
+      } catch (err) {
+        historyList.innerHTML = `<li class="list-group-item text-danger">${err.message}</li>`;
+      }
+    }
+
+    document.getElementById('studentLookup').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      lastLookupStudentId = document.getElementById('studentIdInput').value;
+      refreshChildTracking(lastLookupStudentId);
+    });
+
+    loadNotifications();
+    setInterval(loadNotifications, 15000);
+    setInterval(() => { if (lastLookupStudentId) refreshChildTracking(lastLookupStudentId); }, 15000);
+  </script>
+</body>
+</html>
